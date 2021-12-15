@@ -4,7 +4,7 @@ cr:
 	               src/Frontend/SyntaxAnalizator/analizator.cpp src/Frontend/Tokenizator/token.cpp src/Frontend/front.cpp	\
 				   src/Backend/back.cpp																						\
 		-lstdc++ -lm -o main.out
-	./main.out
+	./main.out test.txt
 
 c:
 	gcc main.cpp   libs/baselib.cpp libs/file_funcs.cpp libs/stack.cpp libs/tree.cpp 										\

@@ -34,6 +34,11 @@
 #define COLORED_OUTPUT(str, color, file) IS_TERMINAL(file) ? (color str NATURAL) : str
 #define IS_TERMINAL(file)                (file == stdin) || (file == stdout) || (file == stderr)
 #define INT_ADDRESS(ptr)                 (int)((char*)(ptr) - (char*)0)
+#define NEW_PTR(type)                    (type*) calloc_s(1, sizeof(type))
+#define BAD_OUTPUT                       COLORED_OUTPUT("(BAD)", RED, log)
+
+#define IS_DIGIT(symbol) ('0' <= symbol && symbol <= '9')
+#define IS_LATIN(symbol) (('a' <= symbol && symbol <= 'z') || ('A' <= symbol && symbol <= 'Z'))
 
 const double FLOAT_COMPARE_PRESICION = 0.0001;
 

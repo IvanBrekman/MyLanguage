@@ -1,0 +1,5 @@
+meow x = 3;
+eat(x) << purrrr x >>
+throw (x * x)
+runaway
+$
