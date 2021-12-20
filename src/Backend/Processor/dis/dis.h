@@ -5,7 +5,7 @@
 #ifndef SIMPLEPROCESSOR_DIS_H
 #define SIMPLEPROCESSOR_DIS_H
 
-#include "../../../../libs/file_funcs.h"
+#include "libs/file_funcs.h"
 #include "../arch/helper.h"
 
 //! Function execute disassembling of executable_file and write asm commands to source_file

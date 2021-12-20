@@ -6,7 +6,7 @@
 #include <cstring>
 #include <cassert>
 
-#include "../../../../libs/baselib.h"
+#include "libs/baselib.h"
 
 #include "labels.h"
 

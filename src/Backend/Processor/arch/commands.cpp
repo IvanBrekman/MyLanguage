@@ -2,9 +2,9 @@
 // Created by ivanbrekman on 16.10.2021.
 //
 
-#include "../../../../config.h"
-#include "../../../../libs/baselib.h"
-#include "../../../../libs/stack.h"
+#include "config.h"
+#include "libs/baselib.h"
+#include "libs/stack.h"
 
 #include "helper.h"
 #include "commands.h"

@@ -7,10 +7,10 @@
 #include <cerrno>
 #include <cassert>
 
-#include "../../../../config.h"
+#include "config.h"
 #include "../processor_config.h"
-#include "../../../../libs/baselib.h"
-#include "../../../../libs/file_funcs.h"
+#include "libs/baselib.h"
+#include "libs/file_funcs.h"
 
 #include "helper.h"
 #include "commands.h"

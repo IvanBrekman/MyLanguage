@@ -5,7 +5,7 @@
 #ifndef SIMPLEPROCESSOR_STACK_H
 #define SIMPLEPROCESSOR_STACK_H
 
-#include "../config.h"
+#include "config.h"
 
 #include <malloc.h>
 #include "baselib.h"

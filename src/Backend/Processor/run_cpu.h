@@ -5,8 +5,8 @@
 #ifndef SIMPLEPROCESSOR_RUN_CPU_H
 #define SIMPLEPROCESSOR_RUN_CPU_H
 
-#include "../../../libs/baselib.h"
-#include "../../../libs/file_funcs.h"
+#include "libs/baselib.h"
+#include "libs/file_funcs.h"
 
 #define CHECK_TRACKED_PROGRAMS(system_call, executable_file) { \
     for (const char* tracked_program : TRACKED_PROGRAMS) {                                                      \

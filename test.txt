@@ -1,4 +1,14 @@
-x = 3;
-y = 4;
-x + y - 3 * (13 - x);
+def x = -3;
+def y =  4;
+
+def max = 0;
+if (x > y) max = x;
+else       max = y;
+
+while (max > 0) { 
+    max = max - 1;
+    x = x + 1;
+    y = y * 2;
+}
+
 $

@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "../../../config.h"
+#include "config.h"
 #include "run_cpu.h"
 
 // gcc main.cpp run_cpu.cpp libs/baselib.cpp libs/file_funcs.cpp -o main.out

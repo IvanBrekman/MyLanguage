@@ -5,7 +5,7 @@
 #ifndef SIMPLEPROCESSOR_ASM_H
 #define SIMPLEPROCESSOR_ASM_H
 
-#include "../../../../libs/file_funcs.h"
+#include "libs/file_funcs.h"
 #include "../arch/helper.h"
 
 //! Function execute assembling of source_file in executable_file

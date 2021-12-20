@@ -40,14 +40,19 @@ enum write_type {
     POSTORDER = 2,
 };
 
+enum child_type {
+    LEFT  = -1,
+    RIGHT =  1
+};
+
 enum data_type {
     ERROR_T = 0,
     CONST_T = 1,
       VAR_T = 2,
-      OPP_T = 3
+      OPR_T = 3
 };
 
-enum  opp_type {
+enum  op_type {
     PLUS     = '+',
     MINUS    = '-',
     MULTIPLY = '*',
@@ -55,12 +60,17 @@ enum  opp_type {
     DEGREE   = '^'
 };
 
-struct exp_value {
-    data_type type = data_type::ERROR_T;
-    int value = poisons::UNINITIALIZED_INT;
+union data_value {
+    int number = poisons::UNINITIALIZED_INT;
+    char* name;
 };
 
-typedef exp_value node_t;
+struct node_value {
+    data_type  type  = data_type::ERROR_T;
+    data_value value = { };
+};
+
+typedef node_value node_t;
 const node_t INIT_VALUE   = (node_t){ data_type::ERROR_T, poisons::UNINITIALIZED_INT };
 const node_t DEINIT_VALUE = (node_t){ data_type::ERROR_T, poisons::FREED_ELEMENT };
 
@@ -130,7 +140,7 @@ int Tree_error(Tree* tree);
 int Node_error(Node* node, int recursive_check=0);
 
 int   set_new_root(Tree* tree,   Node* new_root);
-int      add_child(Node* parent, Node* child, int is_left_child);
+int      add_child(Node* parent, Node* child, child_type type);
 int        is_leaf(Node* node);
 int   is_full_node(Node* node);
 int  is_left_child(Node* node);
@@ -141,9 +151,10 @@ Node* copy_node(Node* node, Node* parent);
 
 int get_inorder_nodes(Node* node, std::list<Node*>* nodes);
 
-int print_node(Node* node);
-int  Node_dump(Node* node, const char* reason, FILE* log=stdout);
-int  Tree_dump(Tree* tree, const char* reason, FILE* log=stdout);
+int      print_node(Node* node);
+int       Node_dump(Node* node, const char* reason, FILE* log=stdout);
+int       Tree_dump(Tree* tree, const char* reason, FILE* log=stdout);
+int Tree_dump_graph(Tree* tree, const char* reason, FILE* log, int show_parent_edge=0);
 
 int  write_tree_to_file(Tree* tree, const char* filename, int w_type);
  int inorder_write_nodes_to_file(Node* node, FILE* file);

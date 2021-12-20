@@ -6,7 +6,7 @@
 #include <cassert>
 #include <cstring>
 
-#include "../../../../libs/baselib.h"
+#include "libs/baselib.h"
 #include "registers.h"
 
 

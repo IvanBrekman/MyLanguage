@@ -7,9 +7,9 @@
 #include <cstring>
 #include <cerrno>
 
-#include "../../../../config.h"
-#include "../../../../libs/baselib.h"
-#include "../../../../libs/file_funcs.h"
+#include "config.h"
+#include "libs/baselib.h"
+#include "libs/file_funcs.h"
 
 #include "../arch/helper.h"
 #include "../arch/labels.h"

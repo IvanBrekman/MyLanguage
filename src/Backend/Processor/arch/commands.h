@@ -5,7 +5,7 @@
 #ifndef SIMPLEPROCESSOR_COMMANDS_H
 #define SIMPLEPROCESSOR_COMMANDS_H
 
-#include "../../../../libs/stack.h"
+#include "libs/stack.h"
 
 #include "helper.h"
 #include "registers.h"

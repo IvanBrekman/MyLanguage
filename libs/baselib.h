@@ -135,13 +135,21 @@ Default define to ASSERT_OK. Use it to customize macros for each project.
     free((ptr));                                \
     (ptr) = (type*)poisons::FREED_PTR;          \
 } while (0)
+
 #define LOG1(code) do {                         \
     if (LOG_PRINTF >= 1) {                      \
         code                                    \
     }                                           \
 } while (0)
+
 #define LOG2(code) do {                         \
     if (LOG_PRINTF >= 2) {                      \
+        code                                    \
+    }                                           \
+} while (0)
+
+#define LOGN(level, code) do {                  \
+    if (LOG_PRINTF >= level) {                  \
         code                                    \
     }                                           \
 } while (0)
@@ -189,6 +197,7 @@ enum poisons {
     printf((color "Time: %s\n" NATURAL), datetime(date));           \
     FREE_PTR(date, char);                                           \
 } while (0)
+
 #define FPRINT_DATE(file) do {                                      \
     char* date = (char*) calloc_s(40, sizeof(char));                \
     fprintf(file, "Time: %s\n", datetime(date));                    \
