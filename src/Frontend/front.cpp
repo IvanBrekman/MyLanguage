@@ -73,6 +73,7 @@ int Front(const char* filepath) {
 #endif
 
     Tree* AST_tree = build_ast_tree(tokens, filepath);
+    WAIT_INPUT;
     Tree_dump(AST_tree, "check tree");
     LOG_DUMP_GRAPH(AST_tree, "Check tree", Tree_dump_graph);
 

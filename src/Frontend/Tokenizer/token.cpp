@@ -56,7 +56,7 @@ Tokens* get_tokens(const char* filename) {
 Tokens* take_tokens(const Text* data) {
     ASSERT_IF(VALID_PTR(data), "Invalid data ptr", NULL);
 
-    Tokens* data_store = NEW_PTR(Tokens);
+    Tokens* data_store = NEW_PTR(Tokens, 1);
     data_store->data   = (Lexem*) calloc_s(MAX_LEXEMS_AMOUNT, sizeof(Lexem));
     data_store->size   = 0;
 
@@ -107,7 +107,9 @@ int get_name(const Text* data, Tokens* data_store, int cur_str, int cur_index) {
     char* name = (char*) calloc_s(MAX_NAME_SIZE, sizeof(char));
     int tmp_index = cur_index;
 
-    while (IS_LATIN(DATA) || DATA == '_') {
+    while (IS_LATIN(DATA) || DATA == '_' || IS_DIGIT(DATA)) {
+        if (IS_DIGIT(DATA) && SHIFT == 0) break;
+        
         name[SHIFT] = DATA;
         cur_index++;
     }

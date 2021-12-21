@@ -2,8 +2,25 @@
 // Created by IvanBrekman on 18.12.2021
 //
 
-#define TOKENS      context.tokens
-#define TOKENS_PTR  context.pointer
+#define GRAMMAR_RULE(name)      SyntaxContext* Rule_ ## name(CompileContext* context)
+#define    CALL_RULE(name)      Rule_ ## name(context)
+#define    RULE_DONE(cnt)       (cnt != NULL)
+#define THROW_ERROR(text)       SyntaxError(text, context);
+
+#define NAME_TABLE          context->name_table
+#define GLOBAL_NAMESPACE    NAME_TABLE.global
+#define LOCAL_NAMESPACES    NAME_TABLE.locals
+#define NAMESPACE           context->cur_namespace
+#define FILEPATH            context->src_filepath
+#define IN_FUNCTION         context->in_function
+#define REQUIRE_RETURN      context->require_return
+#define LAST_NAME(nmsp)     nmsp.names[nmsp.size - 1]
+
+#define ADD_NAMESPACE(name) LOCAL_NAMESPACES[NAME_TABLE.locals_amount++] = { name, NEW_PTR(Name, MAX_NAMES_AMOUNT), 0 }
+#define IN_GLOBAL_NAMESPACE (EQUAL(NAMESPACE->id, GLOBAL_NAMESPACE.id))
+
+#define TOKENS      context->prs_ctx.tokens
+#define TOKENS_PTR  context->prs_ctx.pointer
 #define TOKENS_SIZE TOKENS->size
 
 #define LEXEM       TOKENS->data[TOKENS_PTR]
@@ -18,27 +35,19 @@
 #define IS_IDENTIFIER (LEXEM_TYPE == data_type::VAR_T)
 #define IS_OPERATOR   (LEXEM_TYPE == data_type::OPR_T)
 
-#define IS_VARIABLE(name)  (defined_name(name) == name_type::VARIABLE)
-#define IS_FUNCTION(name)  (defined_name(name) == name_type::FUNCTION)
-#define IS_UNDEFINED(name) (defined_name(name) == name_type::NONE)
-
-#define ADD_NAME(_type)     name_table.names[name_table.size++] = { MAIN_NAME, _type }
+#define ADD_NAME(_type, name)     NAMESPACE->names[NAMESPACE->size++] = { name, _type }
 
 #define MAIN_NAME             func_ctx->main_name
 #define SET_MAIN_NAME(_value) MAIN_NAME = _value;
 
 #define SET_NODE(_type, _value, cnt, _union_type) { \
-    cnt->node = NEW_PTR(Node);                      \
+    cnt->node = NEW_PTR(Node, 1);                   \
     node_ctor(cnt->node, NULL, { _type, 0 });       \
     cnt->node->data.value._union_type  = _value;    \
 }
 
 #define SET_NODE_NAME(_type, _value)    SET_NODE(_type, _value, func_ctx, name);
 #define SET_NODE_NUMBER(_type, _value ) SET_NODE(_type, _value, func_ctx, number);
-
-#define GRAMMAR_RULE(name)      SyntaxContext* Rule_ ## name()
-#define    CALL_RULE(name)      Rule_ ## name()
-#define    RULE_DONE(cnt)       (cnt != NULL)
 
 #define REBIND_NODE(_type, _value, cnt, _child_type) {  \
     Node* tmp = cnt->node;                              \
@@ -50,9 +59,10 @@
 #define CTX_TOKEN_SHIFT                func_ctx->token_shift
 
 #define INIT                                                    \
+    ASSERT_IF(VALID_PTR(context), "Invalid context ptr", NULL); \
     LOGN(3, printf(PURPLE "Start %-40s -> " NATURAL "%s:%d\n",  \
                    __FUNCTION__, __FILE__, __LINE__););         \
-    SyntaxContext* func_ctx = NEW_PTR(SyntaxContext);           \
+    SyntaxContext* func_ctx = NEW_PTR(SyntaxContext, 1);        \
     int start_ptr = TOKENS_PTR
 
 #define RETURN_COMPLETED {                                              \
@@ -63,8 +73,8 @@
 }
 
 #define RETURN_NOT_COMPLETED {                                          \
-    LOGN(3, printf(PURPLE "  End %-31s NOT DONE -> " NATURAL "%s:%d\n", \
-                   __FUNCTION__, __FILE__, __LINE__););                 \
+    LOGN(3, printf(PURPLE "  End %-31s NOT DONE -> " NATURAL "%s:%d %d\n", \
+                   __FUNCTION__, __FILE__, __LINE__, TOKENS_PTR););                 \
     return NULL;                                                        \
 }
 
@@ -76,8 +86,13 @@
     RETURN_COMPLETED;                                   \
 }
 
-#define HARD_REQUIRE(symbol) Require(symbol, REQUIRED,       func_ctx)
-#define SOFT_REQUIRE(symbol) Require(symbol, NON_REQUIRED,   func_ctx)
+#define HARD_REQUIRE(symbol) (context->require_state =     REQUIRED, Require(symbol, context))
+#define SOFT_REQUIRE(symbol) (context->require_state = NON_REQUIRED, Require(symbol, context))
 
-#define CHECK_REDEFINITION(var_type) if (!IS_UNDEFINED(MAIN_NAME)) { TOKENS_PTR -= CTX_TOKEN_SHIFT; SyntaxError("Redefinition of " var_type); }
-#define CHECK_UNDEFINITION(var_type) if ( IS_UNDEFINED(MAIN_NAME)) { TOKENS_PTR -= CTX_TOKEN_SHIFT; SyntaxError("Undefined "       var_type); }
+#define IS_VARIABLE(name)  check_type(name, context, name_type::VARIABLE)
+#define IS_FUNCTION(name)  check_type(name, context, name_type::FUNCTION)
+#define IS_UNDEFINED(name) (!defined_name(name, context)->is_defined)
+
+#define CHECK_REDEFINITION(name) if (check_redefinition(name, context)) { TOKENS_PTR -= CTX_TOKEN_SHIFT; THROW_ERROR("Redefinition of name"); }
+#define CHECK_UNDEFINITION(name) if (IS_UNDEFINED(name))                { TOKENS_PTR -= CTX_TOKEN_SHIFT; THROW_ERROR("Undefined name"      ); }
+

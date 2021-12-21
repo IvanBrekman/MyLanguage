@@ -12,6 +12,8 @@ const int MAX_NAME_SIZE     = 40;
 // ----------------------------------------------------------------------------
 
 // Frontend/SyntaxAnalyzer/anal.h----------------------------------------------
+const int MAX_LOCAL_NAMESPACES_AMOUNT = 100;
+
 static const char*  OPEN_BRACKET = "(";
 static const char* CLOSE_BRACKET = ")";
 static const char*   START_BLOCK = "{";

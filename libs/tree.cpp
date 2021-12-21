@@ -488,9 +488,11 @@ int Tree_dump_graph(Tree* tree, const char* reason, FILE* log, int show_parent_e
 
         const char* shape = "record";
 
-        if      (type == data_type::CONST_T) SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"%d\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, cur_node->data.value.number, color);
+        if (type == data_type::OPR_T && (cur_node->data.value.name[0] == '<' || cur_node->data.value.name[0] == '>'))
+                                             SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"\\%s\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, cur_node->data.value.name,   color);
+        else if (type == data_type::CONST_T) SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"%d\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, cur_node->data.value.number, color);
         else if (type == data_type::OPR_T ||
-                 type == data_type::VAR_T)   SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"\\%s\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, cur_node->data.value.name,   color);
+                 type == data_type::VAR_T)   SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"%s\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, cur_node->data.value.name,   color);
         else                                 SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"UN\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, color);
 
         if (cur_node->parent != NULL && show_parent_edge) {
