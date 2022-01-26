@@ -9,18 +9,21 @@
 #include "../front.h"
 #include "token.h"
 
-#define DATA         data->text[cur_str].ptr[cur_index]
-#define DATA_STRING &data->text[cur_str].ptr[tmp_index]
-#define SHIFT       cur_index - tmp_index
+#define DATA            data->text[*cur_str].ptr[cur_index]
+#define DATA_STRING    &data->text[*cur_str].ptr[tmp_index]
+#define SHIFT           cur_index - tmp_index
+#define CLEAR_SPACES    while (DATA == ' ') cur_index++;
+
 #define SET_NEW_TOKEN(_type, value) {                           \
     data_store->data[data_store->size] = {                      \
         .type  = _type,                                         \
         /* data */   0,                                         \
-        .string = cur_str + 1                                   \
+        .string = *cur_str + 1                                  \
     };                                                          \
     data_store->data[data_store->size++].data.value = value;    \
 }
-#define CLEAR_SPACES while (DATA == ' ') cur_index++;
+
+const char* source = NULL;
 
 int print_lexem(const Lexem* lex) {
     switch (lex->type) {
@@ -42,6 +45,7 @@ int print_lexem(const Lexem* lex) {
 Tokens* get_tokens(const char* filename) {
     ASSERT_IF(VALID_PTR(filename), "Invalid file ptr", NULL);
 
+    source = filename;
     Text data = get_text_from_file(filename);
     LOG2(printf("Raw program:\n"); print_text(&data, "\n"););
 
@@ -60,26 +64,31 @@ Tokens* take_tokens(const Text* data) {
     data_store->data   = (Lexem*) calloc_s(MAX_LEXEMS_AMOUNT, sizeof(Lexem));
     data_store->size   = 0;
 
-    int cur_index = 0, cur_str = 0;
-    while (cur_str < (int) data->lines) {
-        int tmp_index = cur_index, tmp_string = cur_str;
+    int cur_index = 0, str = 0;
+    int* cur_str = &str;
+    while (str < (int) data->lines) {
+        int tmp_index = cur_index, tmp_string = str;
 
         cur_index = get_number  (data, data_store, cur_str, cur_index);
         cur_index = get_name    (data, data_store, cur_str, cur_index);
         cur_index = get_operator(data, data_store, cur_str, cur_index);
 
+        
         if (DATA == '\0') {
-            cur_str++;
             cur_index = 0;
+            (*cur_str)++;
         }
 
-        ASSERT_IF(tmp_index != cur_index || tmp_string != cur_str, "cur_index hasn't changed. Some error in take tokens function.", NULL);
+        ASSERT_IF(tmp_index != cur_index || tmp_string != str, "cur_index hasn't changed. Some error in take tokens function.", NULL);
     }
+
+    char* name = strdup("$");
+    SET_NEW_TOKEN(data_type::OPR_T, name);
 
     return data_store;
 }
 
-int get_number(const Text* data, Tokens* data_store, int cur_str, int cur_index) {
+int get_number(const Text* data, Tokens* data_store, int* cur_str, int cur_index) {
     ASSERT_IF(VALID_PTR(data),       "Invalid data ptr",       0);
     ASSERT_IF(VALID_PTR(data_store), "Invalid data_store ptr", 0);
     
@@ -100,7 +109,7 @@ int get_number(const Text* data, Tokens* data_store, int cur_str, int cur_index)
     return cur_index;
 }
 
-int get_name(const Text* data, Tokens* data_store, int cur_str, int cur_index) {
+int get_name(const Text* data, Tokens* data_store, int* cur_str, int cur_index) {
     ASSERT_IF(VALID_PTR(data),       "Invalid data ptr",       0);
     ASSERT_IF(VALID_PTR(data_store), "Invalid data_store ptr", 0);
 
@@ -125,7 +134,7 @@ int get_name(const Text* data, Tokens* data_store, int cur_str, int cur_index) {
     return cur_index;
 }
 
-int get_operator(const Text* data, Tokens* data_store, int cur_str, int cur_index) {
+int get_operator(const Text* data, Tokens* data_store, int* cur_str, int cur_index) {
     ASSERT_IF(VALID_PTR(data),       "Invalid data ptr",       0);
     ASSERT_IF(VALID_PTR(data_store), "Invalid data_store ptr", 0);
 
@@ -145,7 +154,45 @@ int get_operator(const Text* data, Tokens* data_store, int cur_str, int cur_inde
         name[SHIFT] = '\0';
     }
 
-    if (SHIFT > 0) {
+    if      (SHIFT == 1 && name[0] == LINE_COMMENT_SYMBOL) {
+        LOG2(printf(ORANGE "Detected line comment symbol: " NATURAL "'%s'\n", DATA_STRING););
+        while (DATA != '\0') cur_index++;
+    }
+    else if (SHIFT == 1 && name[0] == MULTILINE_COMMENT_SYMBOL) {
+        LOG2(printf(ORANGE "Detected multiline comment symbol: " NATURAL "'%s'\n", DATA_STRING););
+        int tmp_str = *cur_str;
+
+        while (DATA != MULTILINE_COMMENT_SYMBOL) {
+            if (DATA == '\0') {
+                cur_index = -1;
+                (*cur_str)++;
+            }
+
+            if (*cur_str >= data->lines) {
+                printf(RED "CompileError\n" NATURAL);
+                printf("Unclosed multiline comment.\n");
+                printf("%s:%d ->   ", source, tmp_str + 1);
+
+                int last_comment_index = 0;
+                char* string = data->text[tmp_str].ptr;
+                for (int i = 0; string[i] != '\0'; i++) {
+                    if (string[i] == MULTILINE_COMMENT_SYMBOL) last_comment_index = i;
+                }
+
+                for (int i = 0; string[i] != '\0'; i++) {
+                    if (i == last_comment_index) printf(RED);
+                    printf("%c", string[i]);
+                    if (i == last_comment_index) printf(NATURAL);
+                }
+
+                printf("\n\n");
+                ASSERT_IF(0, "Unclosed comment", -1);
+            }
+            cur_index++;
+        }
+        cur_index++;
+    }
+    else if (SHIFT > 0) {
         LOG2(printf("Got an oper:  '%s'\n"
                     "              '%s'\n", DATA_STRING, name););
         SET_NEW_TOKEN(data_type::OPR_T, name);

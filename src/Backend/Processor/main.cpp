@@ -7,6 +7,11 @@
 
 #include "config.h"
 #include "run_cpu.h"
+#include "src/constants.h"
+
+const char* ASM_COMPILE = "gcc src/Backend/Processor/asm/asm.cpp libs/baselib.cpp libs/file_funcs.cpp libs/stack.cpp src/Backend/Processor/arch/helper.cpp src/Backend/Processor/arch/commands.cpp src/Backend/Processor/arch/labels.cpp src/Backend/Processor/arch/registers.cpp -lm -I . -o src/Backend/Processor/asm/asm.cat";
+const char* DIS_COMPILE = "gcc src/Backend/Processor/dis/dis.cpp libs/baselib.cpp libs/file_funcs.cpp libs/stack.cpp src/Backend/Processor/arch/helper.cpp src/Backend/Processor/arch/commands.cpp src/Backend/Processor/arch/labels.cpp src/Backend/Processor/arch/registers.cpp -lm -I . -o src/Backend/Processor/dis/dis.cat";
+const char* CPU_COMPILE = "gcc src/Backend/Processor/CPU/cpu.cpp libs/baselib.cpp libs/file_funcs.cpp libs/stack.cpp src/Backend/Processor/arch/helper.cpp src/Backend/Processor/arch/commands.cpp src/Backend/Processor/arch/labels.cpp src/Backend/Processor/arch/registers.cpp -lm -I . -o src/Backend/Processor/CPU/cpu.cat";
 
 // gcc main.cpp run_cpu.cpp libs/baselib.cpp libs/file_funcs.cpp -o main.out
 int main(int argc, char** argv) {
@@ -24,12 +29,16 @@ int main(int argc, char** argv) {
         scanf("%s",executable_file);
     }
 
-    int exit_code = run_cpu(source_file, executable_file);
+    FilesContext* ctx = NEW_PTR(FilesContext, 1);
+    *ctx = { HOME_DIR, source_file, executable_file, ASM_COMPILE, DIS_COMPILE, CPU_COMPILE };
+
+    int exit_code = run_cpu(ctx);
 
     if (argc < 3) {
         FREE_PTR(source_file,     char);
         FREE_PTR(executable_file, char);
     }
     
+    printf("%sProcessor finished work with exit code %d\n" NATURAL, (exit_code ? RED : BLUE), exit_code);
     return exit_code;
 }

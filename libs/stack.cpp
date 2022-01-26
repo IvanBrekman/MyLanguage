@@ -537,7 +537,7 @@ void Stack_dump_file_(const Stack* stack, const StackInfo* current_info, const c
                     stack->info_->line, stack->info_->func
                     );
         } else {
-            printf("\tStack definition: " RED "cant access stack.info_ data\n" NATURAL);
+            fprintf(log, "\tStack definition: cant access stack.info_ data\n");
         }
     } else {
         fprintf(log, "\tStack definition: Invalid stack.info_ ptr\n");

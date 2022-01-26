@@ -7,36 +7,45 @@
 #include "config.h"
 #include "anal.h"
 #include "analDSL.h"
+#include "src/StandardLibrary/functions.h"
 
-Tree* build_ast_tree(Tokens* tokens, const char* path) {
+FrontContext* build_ast_tree(Tokens* tokens, const char* path) {
     ASSERT_IF(VALID_PTR(tokens), "Invalid tokens ptr", NULL);
     ASSERT_IF(VALID_PTR(path),   "Invalid path ptr",   NULL);
 
-    Tree* AST_tree = NEW_PTR(Tree, 1);
-    tree_ctor(AST_tree);
+    FrontContext* front = NEW_PTR(FrontContext, 1);
+    front->AST_tree = NEW_PTR(Tree, 1);
+    tree_ctor(front->AST_tree);
 
     CompileContext* context = NEW_PTR(CompileContext, 1);
     *context = {
         .prs_ctx        = { tokens, 0 },
-        .name_table     = {
+        .nametable      = {
             .global         = { strdup("global"), NEW_PTR(Name, MAX_NAMES_AMOUNT), 0 },
             .locals         = NEW_PTR(Namespace, MAX_LOCAL_NAMESPACES_AMOUNT),
             .locals_amount  = 0,
         },
+        .std_ctx        = { NEW_PTR(StandardFunction, MAX_NAMES_AMOUNT), NEW_PTR(int, STD_FUNC_AMOUNT), 0, 0 },
         .src_filepath   = path,
         .expected_sym   = NULL,
         .require_state  = NON_REQUIRED,
         .in_function    = 0,
-        .require_return = 0
+        .require_return = 0,
     };
-    context->cur_namespace = &context->name_table.global;
+    context->cur_namespace = &context->nametable.global;
 
     SyntaxContext* result_data = CALL_RULE(GR);
-    set_new_root(AST_tree, result_data->node);
+    set_new_root(front->AST_tree , result_data->node);
 
-    print_name_table(context);
+    LOG2(
+        print_name_table(context);
+        printf("\n");
+        print_std_context(&STD_CTX);
+    );
+    front->nametable = &context->nametable;
+    front->std_ctx   = &context->std_ctx;
 
-    return AST_tree;
+    return front;
 }
 
 NameContext* defined_name(const char* name, CompileContext* context) {
@@ -47,16 +56,8 @@ NameContext* defined_name(const char* name, CompileContext* context) {
     *ctx = { name_type::NONE, name_type::NONE, 0 };
 
     if (!IN_GLOBAL_NAMESPACE) {
-        Namespace* cur_namespace = NULL;
-        for (int i = 0; i < NAME_TABLE.locals_amount; i++) {
-            if (EQUAL(LOCAL_NAMESPACES[i].id, NAMESPACE->id)) {
-                cur_namespace = &LOCAL_NAMESPACES[i];
-            }
-        }
-        ASSERT_IF(VALID_PTR(cur_namespace), "Cant get namespace with this name", NULL);
-
-        for (int i = 0; i < cur_namespace->size; i++) {
-            Name cur_name = cur_namespace->names[i];
+        for (int i = 0; i < context->cur_namespace->size; i++) {
+            Name cur_name = context->cur_namespace->names[i];
             if (EQUAL(name, cur_name.name)) {
                 ctx->local_view  = cur_name.type;
                 ctx->is_defined  = 1;
@@ -124,8 +125,28 @@ int print_namespace(const Namespace* namespace_) {
 
     for (int i = 0; i < namespace_->size; i++) {
         Name cur_name = namespace_->names[i];
-        printf("    Type: %s; Name: '%s'\n", cur_name.type == name_type::VARIABLE ? " VAR" : "FUNC", cur_name.name);
+
+        printf("    Type: %s; Address: [%2d]; Name: '%s'\n", cur_name.type == name_type::VARIABLE ? " VAR" : "FUNC", cur_name.address, cur_name.name);
+        if (cur_name.type == name_type::FUNCTION) printf("\t\t\tArgs number: %d\n\n", cur_name.args_amount);
     }
+
+    return 1;
+}
+
+int print_std_context(StdContext* std_ctx) {
+    ASSERT_IF(VALID_PTR(std_ctx), "Invalid std_ctx ptr", 0);
+
+    printf("Standard context info----------\n");
+    printf("All detected standard functions\n");
+    for (int i = 0; i < std_ctx->func_amount; i++) {
+        printf("    %s - args amount: %d\n", std_ctx->all_functions[i].name, std_ctx->all_functions[i].real_args);
+    }
+
+    printf("\nUsed functions:\n");
+    for (int i = 0; i < STD_FUNC_AMOUNT; i++) {
+        printf("    %s - %d\n", ALL_STANDARD_FUNCTIONS[i].name, std_ctx->used_functions[i]);
+    }
+    printf("-------------------------------\n");
 
     return 1;
 }
@@ -140,6 +161,18 @@ int is_reserved_name(const char* name) {
     }
 
     return 0;
+}
+
+int is_std_name(CompileContext* context) {
+    ASSERT_IF(VALID_PTR(context), "Invalid context ptr", 0);
+
+    for (int i = 0; i < STD_FUNC_AMOUNT; i++) {
+        if (EQUAL_LEXEM(data_type::VAR_T, ALL_STANDARD_FUNCTIONS[i].name)) {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 // RULES-----------------------------------------------------------------------
@@ -186,7 +219,7 @@ GRAMMAR_RULE(Statement) {
     if (IN_FUNCTION) {
         func_ctx = CALL_RULE(Return);
         if (RULE_DONE(func_ctx)) {
-            REBIND_CNT_LEFT(data_type::OPR_T, strdup(";"));
+            REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
             RETURN_COMPLETED;
         }
         if (REQUIRE_RETURN) THROW_ERROR("Expected return in function");
@@ -194,19 +227,19 @@ GRAMMAR_RULE(Statement) {
     
     func_ctx = CALL_RULE(If);
     if (RULE_DONE(func_ctx)) {
-        REBIND_CNT_LEFT(data_type::OPR_T, strdup(";"));
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(While);
     if (RULE_DONE(func_ctx)) {
-        REBIND_CNT_LEFT(data_type::OPR_T, strdup(";"));
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(Fdef);
     if (RULE_DONE(func_ctx)) {
-        REBIND_CNT_LEFT(data_type::OPR_T, strdup(";"));
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
         RETURN_COMPLETED;
     }
 
@@ -217,6 +250,146 @@ GRAMMAR_RULE(Statement) {
     if (RULE_DONE(func_ctx)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"));
 
     RETURN_NOT_COMPLETED;
+}
+
+GRAMMAR_RULE(Fdef) {
+    INIT;
+
+    if (!EQUAL_LEXEM(data_type::VAR_T, "func")) RETURN_NOT_COMPLETED;
+    TOKENS_PTR++;
+
+    func_ctx = CALL_RULE(Id);
+    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected func name");
+    CHECK_REDEFINITION(MAIN_NAME)
+
+    IN_FUNCTION    = 1;
+    REQUIRE_RETURN = 1;
+    ADD_NAMESPACE(func_ctx->main_name);
+    ADD_NAME(name_type::FUNCTION, MAIN_NAME);
+
+    NAMESPACE = &LOCAL_NAMESPACES[NAME_TABLE.locals_amount - 1];
+    ADD_NAME(name_type::FUNCTION, MAIN_NAME);
+    REBIND_CTX_LEFT(data_type::VAR_T, strdup("func"));
+
+    HARD_REQUIRE(OPEN_BRACKET);
+
+    int args_amount = 0;
+    Node* cur_node = func_ctx->node->left;
+    SyntaxContext* args = NULL;
+    while (args = CALL_RULE(Id)) {
+        CHECK_REDEFINITION(args->main_name);
+        ADD_NAME(name_type::VARIABLE, args->main_name);
+
+        add_child(cur_node, args->node, child_type::LEFT);
+        cur_node = args->node;
+        args_amount++;
+
+        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
+        TOKENS_PTR++;
+    }
+    HARD_REQUIRE(CLOSE_BRACKET);
+
+    LAST_NAME(GLOBAL_NAMESPACE).args_amount                                              = args_amount;
+    LAST_N_NAME(LOCAL_NAMESPACES[NAME_TABLE.locals_amount - 1], args_amount).args_amount = args_amount;
+
+    SyntaxContext* st = CALL_RULE(Statement);
+    if (!RULE_DONE(st)) THROW_ERROR("Expected statement after func definition");
+    add_child(func_ctx->node, st->node, child_type::RIGHT);
+
+    IN_FUNCTION    = 0;
+    REQUIRE_RETURN = 0;
+
+    NAMESPACE   = &GLOBAL_NAMESPACE;
+    RETURN_COMPLETED;
+}
+
+GRAMMAR_RULE(Return) {
+    INIT;
+
+    if (!EQUAL_LEXEM(data_type::VAR_T, "return")) RETURN_NOT_COMPLETED;
+    TOKENS_PTR++;
+
+    func_ctx = CALL_RULE(Exp);
+    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Expression after return");
+
+    RETURN_WITH_REBIND(END_STATEMENT, data_type::VAR_T, strdup("return"));
+}
+
+GRAMMAR_RULE(Call) {
+    INIT;
+
+    func_ctx = CALL_RULE(Id);
+    if (!RULE_DONE(func_ctx)) RETURN_NOT_COMPLETED;
+    if (!IS_FUNCTION(MAIN_NAME)) {
+        TOKENS_PTR--;
+        RETURN_NOT_COMPLETED;
+    }
+
+    HARD_REQUIRE(OPEN_BRACKET);
+    REBIND_CTX_LEFT(data_type::VAR_T, strdup("call"));
+
+    int args_amount = defined_name(MAIN_NAME, context)->args_amount;
+
+    int real_args_am = 0;
+    Node* cur_node = func_ctx->node;
+    SyntaxContext* args = NULL;
+    while (args = CALL_RULE(Exp)) {
+        REBIND_NODE(data_type::OPR_T, strdup(";"), args, LEFT);
+        add_child(cur_node, args->node, child_type::RIGHT);
+        cur_node = args->node;
+        real_args_am++;
+
+        if (real_args_am > args_amount) THROW_ERROR("Too many agruments for function");
+        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
+        TOKENS_PTR++;
+    }
+
+   if (real_args_am < args_amount) THROW_ERROR("Not enough arguments for function");
+
+    HARD_REQUIRE(CLOSE_BRACKET);
+    RETURN_COMPLETED;
+}
+
+GRAMMAR_RULE(StdFunc) {
+    INIT;
+
+    int std_name_index = is_std_name(context);
+    if (std_name_index == -1) RETURN_NOT_COMPLETED;
+
+    SET_NODE_NAME(data_type::VAR_T, LEXEM_NAME);
+    TOKENS_PTR++;
+
+    HARD_REQUIRE(OPEN_BRACKET);
+    REBIND_CTX_LEFT(data_type::VAR_T, strdup("call"));
+
+    int       real_args_am = 0;
+    Node*         cur_node = func_ctx->node;
+    SyntaxContext*    args = NULL;
+
+    StandardFunction* func = NEW_PTR(StandardFunction, 1);
+    memcpy(func, &ALL_STANDARD_FUNCTIONS[std_name_index], sizeof(StandardFunction));
+
+    while (args = CALL_RULE(Exp)) {
+        REBIND_NODE(data_type::OPR_T, strdup(";"), args, LEFT);
+        if (real_args_am == 0) {
+            add_child(cur_node, args->node, child_type::RIGHT);
+        } else {
+            add_child(args->node, cur_node->right, child_type::RIGHT);
+            add_child(cur_node, args->node, child_type::RIGHT);
+        }
+        real_args_am++;
+
+        if (real_args_am > func->max_args) THROW_ERROR("Too many agruments for standard function");
+        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
+        TOKENS_PTR++;
+    }
+    if (real_args_am < func->min_args) THROW_ERROR("Not enough arguments for standard function");
+
+    HARD_REQUIRE(CLOSE_BRACKET);
+
+    func->real_args = real_args_am;
+    ADD_STD_FUNC(func, std_name_index);
+    RETURN_COMPLETED;
 }
 
 GRAMMAR_RULE(While) {
@@ -289,109 +462,11 @@ GRAMMAR_RULE(If_cond) {
     SyntaxContext* st = CALL_RULE(Statement);
     if (!RULE_DONE(st)) THROW_ERROR("Expected statement after if");
 
-    REBIND_CNT_LEFT(data_type::OPR_T, strdup("if"));
+    REBIND_CTX_LEFT(data_type::OPR_T, strdup("if"));
     REBIND_NODE(data_type::OPR_T, strdup("if_else"), st, child_type::LEFT);
     add_child(func_ctx->node, st->node, child_type::RIGHT);
     //
 
-    RETURN_COMPLETED;
-}
-
-GRAMMAR_RULE(Fdef) {
-    INIT;
-
-    if (!EQUAL_LEXEM(data_type::VAR_T, "func")) RETURN_NOT_COMPLETED;
-    TOKENS_PTR++;
-
-    func_ctx = CALL_RULE(Id);
-    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected func name");
-    CHECK_REDEFINITION(MAIN_NAME);
-
-    IN_FUNCTION    = 1;
-    REQUIRE_RETURN = 1;
-    ADD_NAMESPACE(func_ctx->main_name);
-    ADD_NAME(name_type::FUNCTION, MAIN_NAME);
-
-    NAMESPACE = &LOCAL_NAMESPACES[NAME_TABLE.locals_amount - 1];
-    ADD_NAME(name_type::FUNCTION, MAIN_NAME);
-    REBIND_CNT_LEFT(data_type::VAR_T, strdup("func"));
-
-    HARD_REQUIRE(OPEN_BRACKET);
-
-    int args_amount = 0;
-    Node* cur_node = func_ctx->node->left;
-    SyntaxContext* args = NULL;
-    while (args = CALL_RULE(Id)) {
-        CHECK_REDEFINITION(args->main_name);
-        ADD_NAME(name_type::VARIABLE, args->main_name);
-
-        add_child(cur_node, args->node, child_type::LEFT);
-        cur_node = args->node;
-        args_amount++;
-
-        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
-        TOKENS_PTR++;
-    }
-    HARD_REQUIRE(CLOSE_BRACKET);
-
-    LAST_NAME(GLOBAL_NAMESPACE).args_amount                               = args_amount;
-    LAST_NAME(LOCAL_NAMESPACES[NAME_TABLE.locals_amount - 1]).args_amount = args_amount;
-
-    SyntaxContext* st = CALL_RULE(Statement);
-    if (!RULE_DONE(st)) THROW_ERROR("Expected statement after func definition");
-    add_child(func_ctx->node, st->node, child_type::RIGHT);
-
-    IN_FUNCTION    = 0;
-    REQUIRE_RETURN = 0;
-
-    NAMESPACE   = &GLOBAL_NAMESPACE;
-    RETURN_COMPLETED;
-}
-
-GRAMMAR_RULE(Return) {
-    INIT;
-
-    if (!EQUAL_LEXEM(data_type::VAR_T, "return")) RETURN_NOT_COMPLETED;
-    TOKENS_PTR++;
-
-    func_ctx = CALL_RULE(Exp);
-    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Expression after return");
-
-    RETURN_WITH_REBIND(END_STATEMENT, data_type::VAR_T, strdup("return"));
-}
-
-GRAMMAR_RULE(Call) {
-    INIT;
-
-    func_ctx = CALL_RULE(Id);
-    if (!RULE_DONE(func_ctx)) RETURN_NOT_COMPLETED;
-    if (!IS_FUNCTION(MAIN_NAME)) {
-        TOKENS_PTR--;
-        RETURN_NOT_COMPLETED;
-    }
-
-    HARD_REQUIRE(OPEN_BRACKET);
-    REBIND_CNT_LEFT(data_type::VAR_T, strdup("call"));
-
-    int args_amount = defined_name(MAIN_NAME, context)->args_amount;
-
-    int real_args_am = 0;
-    Node* cur_node = func_ctx->node;
-    SyntaxContext* args = NULL;
-    while (args = CALL_RULE(Exp)) {
-        REBIND_NODE(data_type::OPR_T, strdup(";"), args, LEFT);
-        add_child(cur_node, args->node, child_type::RIGHT);
-        cur_node = args->node;
-        real_args_am++;
-
-        if (real_args_am > args_amount) THROW_ERROR("Too many agruments for function");
-        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
-        TOKENS_PTR++;
-    }
-
-   if (real_args_am < args_amount) THROW_ERROR("Not enough arguments for function");
-
-    HARD_REQUIRE(CLOSE_BRACKET);
     RETURN_COMPLETED;
 }
 
@@ -411,12 +486,9 @@ GRAMMAR_RULE(Vdef) {
     }
 
     func_ctx = CALL_RULE(Id);
-    if (RULE_DONE(func_ctx)) {
-        CHECK_REDEFINITION(MAIN_NAME);
-        ADD_NAME(name_type::VARIABLE, MAIN_NAME);
-        RETURN_COMPLETED;
-    }
+    if (RULE_DONE(func_ctx)) THROW_ERROR("!!!Assignment in variable definition is required (По заветам Деда)!!!");
     
+    THROW_ERROR("Expected variable definition");
     RETURN_NOT_COMPLETED;
 }
 
@@ -427,7 +499,6 @@ GRAMMAR_RULE(Ass) {
     if (!RULE_DONE(variable)) RETURN_NOT_COMPLETED;
 
     if (!SOFT_REQUIRE("=") || IS_FUNCTION(variable->main_name)) {
-        dbg();
         TOKENS_PTR--;
         RETURN_NOT_COMPLETED;
     }
@@ -504,13 +575,19 @@ GRAMMAR_RULE(P) {
 
     func_ctx = CALL_RULE(Number);
     if (RULE_DONE(func_ctx)) {
-        if (unary_oper) REBIND_CNT_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(Call);
     if (RULE_DONE(func_ctx)) {
-        if (unary_oper) REBIND_CNT_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
+        RETURN_COMPLETED;
+    }
+
+    func_ctx = CALL_RULE(StdFunc);
+    if (RULE_DONE(func_ctx)) {
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
         RETURN_COMPLETED;
     }
 
@@ -522,7 +599,7 @@ GRAMMAR_RULE(P) {
             THROW_ERROR("Not a Variable");
         }
 
-        if (unary_oper) REBIND_CNT_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
         RETURN_COMPLETED;
     }
 
@@ -545,8 +622,8 @@ GRAMMAR_RULE(Number) {
 
 GRAMMAR_RULE(Id) {
     INIT;
-    if (!IS_NUMBER) printf("name: '%s'\n", LEXEM_NAME);
-    if (!IS_IDENTIFIER || is_reserved_name(LEXEM_NAME)) {
+
+    if (!IS_IDENTIFIER || is_reserved_name(LEXEM_NAME) || is_std_name(context) != -1) {
         RETURN_NOT_COMPLETED;
     }
 

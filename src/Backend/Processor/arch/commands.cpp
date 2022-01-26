@@ -33,6 +33,8 @@ int destroy_processor() {
 }
 
 int processor_dump(FILE* log) {
+    printf(PURPLE "Processor dump---------------------------------------------------------------------\n" NATURAL);
+
     printf("Registers:\n");
     print_reg(&processor.regs);
 
@@ -42,12 +44,21 @@ int processor_dump(FILE* log) {
     printf("Stack_call: ");
     print_stack_line(&processor.call_stack, ", ", "\n", log);
 
-    printf("RAM:        [");
-    for (int i = 0; i < 50; i++) {
-        printf("%d", processor.RAM[i]);
-        if (i + 1 < 50) printf(", ");
+    printf("\n             ");
+    for (int i = 0; i < 40; i++) {
+        printf("%2d", i);
+        if (i + 1 < 40) printf("  ");
     }
-    printf("]\n");
+
+    printf("\nRAM:        [");
+    for (int i = 0; i < 40; i++) {
+        if (processor.RAM[i]) printf(PURPLE);
+        printf("%2d", processor.RAM[i]);
+        if (processor.RAM[i]) printf(NATURAL);
+
+        if (i + 1 < 40) printf(", ");
+    }
+    printf("]\n\n");
 
     printf("VRAM:       [");
     for (int i = 0; i < 50; i++) {
@@ -55,6 +66,8 @@ int processor_dump(FILE* log) {
         if (i + 1 < 50) printf(", ");
     }
     printf("]\n");
+
+    printf(PURPLE "-----------------------------------------------------------------------------------\n" NATURAL);
 
     return exit_codes::OK;
 }

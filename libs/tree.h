@@ -151,7 +151,6 @@ Node* copy_node(Node* node, Node* parent);
 
 int get_inorder_nodes(Node* node, std::list<Node*>* nodes);
 
-int      print_node(Node* node);
 int       Node_dump(Node* node, const char* reason, FILE* log=stdout);
 int       Tree_dump(Tree* tree, const char* reason, FILE* log=stdout);
 int Tree_dump_graph(Tree* tree, const char* reason, FILE* log, int show_parent_edge=0);

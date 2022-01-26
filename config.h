@@ -6,7 +6,7 @@
 #define CONFIG
 
 #define VALIDATE_LEVEL   1
-#define EXECUTE_WAITINGS 1
+#define EXECUTE_WAITINGS 0
 
 #define LOG_PRINTF 3
 #define LOG_GRAPH  1

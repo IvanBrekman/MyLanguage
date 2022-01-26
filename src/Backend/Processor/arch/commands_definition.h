@@ -55,8 +55,9 @@ COMMAND_DEFINITION( abrt,  1, 0, 0, 0b0000000000000000,  {
 // Stack commands--------------------------------------------------------------
 COMMAND_DEFINITION( push,  2, 1, 1, 0b1111110011111100,  {
     int arg = 0;
+    int need_prec = HAS_NUMBER && (HAS_REGISTER + !HAS_REGISTER * !HAS_RAM);
     if (HAS_REGISTER) arg += read_from_reg(REG, ARG(0, REGISTER_BIT));
-    if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT);
+    if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT) * pow(10, PRECISION_ * need_prec);
     if (HAS_RAM)      arg  = RAM(arg);
     
     PUSH(arg);
@@ -114,7 +115,7 @@ COMMAND_DEFINITION( sub,   8, 0, 0, 0b0000000000000000,  {
 })
 
 COMMAND_DEFINITION( mul,   9, 0, 0, 0b0000000000000000,  {
-    PUSH(POP * POP);
+    PUSH(POP * POP * pow(10, -PRECISION_));
     return OK_;
 })
 

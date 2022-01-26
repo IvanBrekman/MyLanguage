@@ -10,6 +10,9 @@ To create new DSL word add new define with name and replaced text:
     #define EXAMPLE printf("example DSL word\n");
 */
 
+#include "config.h"
+#include "../../processor_config.h"
+
 #define OK_                     exit_codes::OK
 #define EXIT_                   exit_codes::EXIT
 #define BREAK_                  exit_codes::BREAK
@@ -18,7 +21,6 @@ To create new DSL word add new define with name and replaced text:
 #define POP                     pop(&processor.stack)
 #define DUMP                    stack_dump(processor.stack, "System dump call")
 
-#define OUT                     printf("%d\n", POP)
 #define PRINT                   print_stack(&processor.stack)
 
 #define PUSH_C(val)             push(&processor.call_stack, val)
@@ -36,4 +38,15 @@ To create new DSL word add new define with name and replaced text:
 #define ARG(number, type)       argv[(number * TYPES_AMOUNT) + type]
 
 #define PRECISION_              read_from_reg(REG, system_registers::VALUE_PRECISION)
-#define OUTV                    printf("%.*f\n", PRECISION_, POP * pow(10, -PRECISION_))
+
+#define OUT {                                                                                                \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
+    printf("%d\n", POP);                                                                                     \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
+}
+
+#define OUTV {                                                                                               \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
+    printf("%.*f\n", PRECISION_, POP * pow(10, -PRECISION_));                                                \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
+}

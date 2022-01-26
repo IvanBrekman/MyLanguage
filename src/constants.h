@@ -5,6 +5,19 @@
 #ifndef CONSTANTSH
 #define CONSTANTSH
 
+// Backend/MemoryDistributor/memdis.h------------------------------------------
+const int CONST_MEMORY_START = 10;
+
+static const char* ASM_CODE_FILE = "logs/processor_work/asm_code.txt";
+// ----------------------------------------------------------------------------
+
+// Backend/Processor-----------------------------------------------------------
+static const char* HOME_DIR = "src/Backend/Processor";
+// ----------------------------------------------------------------------------
+
+
+/* FRONTEND CONSTANTS *///+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 // Frontend/front.h------------------------------------------------------------
 const int MAX_LEXEMS_AMOUNT = 1000;
 const int MAX_NAMES_AMOUNT  = 100;
@@ -33,9 +46,13 @@ const int NON_REQUIRED = 0;
 // Frontend/Tokenizer/token.h--------------------------------------------------
 static const char* OPERATORS[] = {
     "==", "!=", "<=", ">=",
-    ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$"
+    ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$",
 };
+static const char      LINE_COMMENT_SYMBOL = '#';
+static const char MULTILINE_COMMENT_SYMBOL = '@';
 const int OPERATORS_AMOUNT = sizeof(OPERATORS) / sizeof(OPERATORS[0]);
 // ----------------------------------------------------------------------------
+
+/* END BLOCK *///++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif // CONSTANTSH

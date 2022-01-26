@@ -72,7 +72,7 @@ Default define to ASSERT_OK. Use it to customize macros for each project.
 
 #define LOG_DUMP(obj, reason, func) do {                                            \
     if (VALIDATE_LEVEL >= HIGHEST_VALIDATE) {                                       \
-        FILE* log = open_file("log.txt", "a");                                      \
+        FILE* log = open_file("logs/log.txt", "a");                                 \
         func(obj, reason, log);                                                     \
         close_file(log);                                                            \
     }                                                                               \
@@ -80,7 +80,7 @@ Default define to ASSERT_OK. Use it to customize macros for each project.
 
 #define LOG_DUMP_GRAPH(obj, reason, func) do {                                      \
     if (LOG_GRAPH == 1) {                                                           \
-        FILE* gr_log = open_file("log.html", "a");                                  \
+        FILE* gr_log = open_file("logs/log.html", "a");                             \
         func(obj, reason, gr_log);                                                  \
         close_file(gr_log);                                                         \
     }                                                                               \
@@ -89,7 +89,7 @@ Default define to ASSERT_OK. Use it to customize macros for each project.
 #define PRINT_WARNING(text) do {                                                    \
     printf(__FILE__ ":%d " ORANGE text NATURAL, __LINE__);                          \
     if (VALIDATE_LEVEL >= HIGHEST_VALIDATE) {                                       \
-        FILE* wlog = open_file("log.txt", "a");                                     \
+        FILE* wlog = open_file("logs/log.txt", "a");                                \
         fprintf(wlog, __FILE__ ":%d " text, __LINE__);                              \
         close_file(wlog);                                                           \
     }                                                                               \
@@ -98,7 +98,7 @@ Default define to ASSERT_OK. Use it to customize macros for each project.
 #define APRINT_WARNING(text, args...) do {                                          \
     printf(__FILE__ ":%d " ORANGE text NATURAL, __LINE__, args);                    \
     if (VALIDATE_LEVEL >= HIGHEST_VALIDATE) {                                       \
-        FILE* wlog = open_file("log.txt", "a");                                     \
+        FILE* wlog = open_file("logs/log.txt", "a");                                \
         fprintf(wlog, __FILE__ ":%d " text, __LINE__, args);                        \
         close_file(wlog);                                                           \
     }                                                                               \

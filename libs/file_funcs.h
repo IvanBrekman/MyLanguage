@@ -8,8 +8,8 @@
 #include <cstdio>
 
 struct String {
-    char* ptr;
-    size_t   len;
+    char*  ptr;
+    size_t len;
 };
 
 struct Text {

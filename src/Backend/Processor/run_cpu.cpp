@@ -7,7 +7,19 @@
 #include <cassert>
 #include <cstring>
 
+#include "config.h"
+#include "processor_config.h"
 #include "run_cpu.h"
+
+#define SPR_SYSTEM_CODE(result, format...) {                                        \
+    char* command = (char*) calloc_s(MAX_SPRINTF_STRING_SIZE, sizeof(char));        \
+    sprintf(command, format);                                                       \
+                                                                                    \
+    result = system(command);                                                       \
+                                                                                    \
+    FREE_PTR(command, char);                                                        \
+}
+
 
 // Array of programs, which time of last change will be checked
 const char* TRACKED_PROGRAMS[] = {
@@ -15,7 +27,7 @@ const char* TRACKED_PROGRAMS[] = {
         "arch/helper.cpp",    "arch/helper.h",
         "arch/labels.cpp",    "arch/labels.h",
         "arch/registers.cpp", "arch/registers.h",
-        "arch/commands_definition.h",
+        "arch/commands_definition.h", "arch/DSL/commands_syntax.h",
 
         "asm/asm.cpp", "asm/asm.h",
         "dis/dis.cpp", "dis/dis.h",
@@ -25,61 +37,105 @@ const char* TRACKED_PROGRAMS[] = {
         "../../../libs/file_funcs.cpp", "../../../libs/file_funcs.h",
         "../../../libs/stack.cpp",      "../../../libs/stack.h",
 
-        "../../../config.h"
+        "../../../config.h", "processor_config.h"
 };
 
-const char* decompile_output = "commands_disassembled.txt";
-const char* compile_strings[] = {
-        "gcc asm/asm.cpp ../../../libs/baselib.cpp ../../../libs/file_funcs.cpp ../../../libs/stack.cpp arch/helper.cpp arch/commands.cpp arch/labels.cpp arch/registers.cpp -lm -o asm/asm.cat",
-        "gcc dis/dis.cpp ../../../libs/baselib.cpp ../../../libs/file_funcs.cpp ../../../libs/stack.cpp arch/helper.cpp arch/commands.cpp arch/labels.cpp arch/registers.cpp -lm -o dis/dis.cat",
-        "gcc CPU/cpu.cpp ../../../libs/baselib.cpp ../../../libs/file_funcs.cpp ../../../libs/stack.cpp arch/helper.cpp arch/commands.cpp arch/labels.cpp arch/registers.cpp -lm -o CPU/cpu.cat"
-};
-const char* execute_strings[] = {
-        "./asm/asm.cat ",
-        "./dis/dis.cat ",
-        "./CPU/cpu.cat "
-};
+const char* decompile_output = "logs/processor_work/commands_disassembled.txt";
 
 //! Function compile assembler, disassembler and CPU programs (if it need), then compile and decompile source_file (if it need), and finelly execute executable_file
-//! \param source_file     path to file with asm commands
-//! \param executable_file path to executable file, which will be created (if it need) and exeuted
-//! \return                exit code of executing program
+//! \param context     ptr to FilesContext object with needed strings
+//! \return            exit code of executing program
 //! \note Compiling programs depends on time of last change in files
-int run_cpu(const char* source_file, const char* executable_file) {
-    assert(VALID_PTR(source_file)     && "Invalid ptr to source_file.");
-    assert(VALID_PTR(executable_file) && "Invalid ptr to source_file.");
+int run_cpu(FilesContext* context) {
+    ASSERT_IF(VALID_PTR(context), "Invalid context ptr", -1);
+    ASSERT_IF(VALID_PTR(context->source_file),     "Invalid source_file ptr",     -1);
+    ASSERT_IF(VALID_PTR(context->executable_file), "Invalid executable_file ptr", -1);
 
-    char* command_compile   = (char*) calloc(strlen(execute_strings[0]) + strlen(source_file) + 1 + strlen(executable_file) + 1, sizeof(char));
-    strcpy(command_compile, execute_strings[0]);
-    strcat(command_compile, source_file);
-    strcat(command_compile, " ");
-    strcat(command_compile, executable_file);
-    printf("command compile:   %s\n", command_compile);
+    ASSERT_IF(VALID_PTR(context->compile_asm), "Invalid compile_asm ptr", -1);
+    ASSERT_IF(VALID_PTR(context->compile_dis), "Invalid compile_dis ptr", -1);
+    ASSERT_IF(VALID_PTR(context->compile_cpu), "Invalid compile_cpu ptr", -1);
 
-    char* command_decompile = (char*) calloc(strlen(execute_strings[1]) + strlen(executable_file) + 1 + strlen(decompile_output) + 1, sizeof(char));
-    strcpy(command_decompile, execute_strings[1]);
-    strcat(command_decompile, executable_file);
-    strcat(command_decompile, " ");
-    strcat(command_decompile, decompile_output);
-    printf("command decompile: %s\n", command_decompile);
+    char* asm_file = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);
+    sprintf(asm_file, "%s/%s", context->home_dir, "asm/asm.cat");
 
-    char* command_execute   = (char*) calloc(strlen(execute_strings[2]) + strlen(source_file) + 1, sizeof(char));
-    strcpy(command_execute, execute_strings[2]);
-    strcat(command_execute, executable_file);
-    printf("command execute:   %s\n\n", command_execute);
+    char* dis_file = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);
+    sprintf(dis_file, "%s/%s", context->home_dir, "dis/dis.cat");
 
-    CHECK_PROCESSOR_SYSTEM_CALL(system(compile_strings[0]), "asm/asm.cat");
-    CHECK_PROCESSOR_SYSTEM_CALL(system(compile_strings[1]), "dis/dis.cat");
-    CHECK_PROCESSOR_SYSTEM_CALL(system(compile_strings[2]), "CPU/cpu.cat");
+    char* cpu_file = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);
+    sprintf(cpu_file, "%s/%s", context->home_dir, "CPU/cpu.cat");
 
-    CHECK_SYSTEM_CALL(system(command_compile),   source_file, executable_file);
-    CHECK_SYSTEM_CALL(system(command_decompile), source_file, decompile_output);
-    printf("\n");
+    LOG1(printf("asm file: '%s'\ndis file: '%s'\ncpu file: '%s'\n", asm_file, dis_file, cpu_file););
 
-    int exit_code = system(command_execute);
+    check_tracked_programs(context, asm_file);
+    check_tracked_programs(context, dis_file);
+    check_tracked_programs(context, cpu_file);
 
-    FREE_PTR(command_compile,   char);
-    FREE_PTR(command_decompile, char);
-    FREE_PTR(command_execute,   char);
+    if (!context->updated) {
+        LOG1(printf(ORANGE "Skip processor compiling" NATURAL "\n"););
+    }
+
+    if (file_last_change(context->source_file) > file_last_change(context->executable_file) || context->updated) {
+        int exit_code = 0;
+        SPR_SYSTEM_CODE(exit_code, "./%s %s %s", asm_file, context->source_file, context->executable_file);
+        WAIT_INPUT;
+
+        if (exit_code != 0) return exit_code;
+    }
+    if (file_last_change(context->source_file) > file_last_change(decompile_output) || context->updated) {
+        int exit_code = 0;
+        SPR_SYSTEM_CODE(exit_code, "./%s %s %s", dis_file, context->executable_file, decompile_output);
+        WAIT_INPUT;
+
+        if (exit_code != 0) return exit_code;
+    }
+    LOG1(printf("\n"););
+
+    char* command = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);
+    sprintf(command, "./%s %s", cpu_file, context->executable_file);
+    int exit_code = system(command);
+
+    FREE_PTR(command,  char);
+    FREE_PTR(asm_file, char);
+    FREE_PTR(dis_file, char);
+    FREE_PTR(cpu_file, char);
+
     return exit_code;
+}
+
+//! Function checked tracked programs and compile processor programs (if it need)
+//! \param context         ptr to FilesContext object with needed strings
+//! \param regarding_file  ptr to filename regarding which checked tracking programs
+//! \return                1 if success else 0
+int check_tracked_programs(FilesContext* context, const char* regarding_file) {
+    ASSERT_IF(VALID_PTR(context),        "Invalid context ptr",        -1);
+    ASSERT_IF(VALID_PTR(regarding_file), "Invalid regarding_file ptr", -1);
+
+    ASSERT_IF(VALID_PTR(context->source_file),     "Invalid source_file ptr",     -1);
+    ASSERT_IF(VALID_PTR(context->executable_file), "Invalid executable_file ptr", -1);
+
+    ASSERT_IF(VALID_PTR(context->compile_asm), "Invalid compile_asm ptr", -1);
+    ASSERT_IF(VALID_PTR(context->compile_dis), "Invalid compile_dis ptr", -1);
+    ASSERT_IF(VALID_PTR(context->compile_cpu), "Invalid compile_cpu ptr", -1);
+
+    if (context->updated) return 1;
+
+    for (const char* tracked_program : TRACKED_PROGRAMS) {
+        char* full_file = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);
+        sprintf(full_file, "%s/%s", context->home_dir, tracked_program);
+
+        if (file_last_change(full_file) > file_last_change(regarding_file)) {
+            LOG1(printf("Start compiling processor...\n"););
+
+            SYS_COMPILE(context->compile_asm);
+            SYS_COMPILE(context->compile_dis);
+            SYS_COMPILE(context->compile_cpu);
+
+            LOG1(printf(GREEN "Successful compiling\n\n" NATURAL "\n"););
+
+            context->updated = 1;
+            return 1;
+        }                                                                                                       
+    }
+
+    return 0;
 }

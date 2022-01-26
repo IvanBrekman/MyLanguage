@@ -8,14 +8,13 @@
 // Header in binary files to check them state
 struct header {
     char signature[3] = "IB";
-    char version[10]  = "1.5.7";
+    char version[10]  = "1.5.8";
 };
 const header HEADER = { };
 
 #define MAX_ARG_SIZE      50    /* How much symbols can be in one argument definition */
 
 #define LOG_PROCESSOR_STATE 1   /* Output state of processor while executing commands (0 or 1) */
-
 #define SKIP_EMPTY_STRINGS      1   /* Skip empty strings in source file (0 or 1) */
 /* Skip spaces before first and after last not spaces symbol.
     from "       text, some text,,,, !    "

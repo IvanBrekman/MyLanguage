@@ -8,39 +8,28 @@
 #include "libs/baselib.h"
 #include "libs/file_funcs.h"
 
-#define CHECK_TRACKED_PROGRAMS(system_call, executable_file) { \
-    for (const char* tracked_program : TRACKED_PROGRAMS) {                                                      \
-        if (file_last_change(tracked_program) > file_last_change(executable_file)) {                            \
-            int exit_code = system_call;                                                                        \
-            if (exit_code != 0) {                                                                               \
-                printf("%s\n" RED "program finished with exit code %d" NATURAL "\n", #system_call, exit_code);  \
-                assert(0 && "Bad exit code");                                                                   \
-            }                                                                                                   \
-        updated = 1;                                                                                            \
-        break;                                                                                                  \
-        }                                                                                                       \
-    }                                                                                                           \
-}
-#define CHECK_PROCESSOR_SYSTEM_CALL(system_call, executable_file) {                                             \
-    int updated = 0;                                                                                            \
-    CHECK_TRACKED_PROGRAMS(system_call, executable_file);                                                       \
-    if (!updated) printf(BLUE "Skip processor system call \"%s\"" NATURAL "\n", #system_call);                  \
+#define SYS_COMPILE(string) {                           \
+    printf("%s\n", string);                             \
+    int exit_code = system(string);                     \
+    if (exit_code != 0) {                               \
+        printf(RED "Error in compiling.\n" NATURAL);    \
+        ASSERT_IF(0, "Error in compiling", -1);         \
+    }                                                   \
 }
 
-#define CHECK_SYSTEM_CALL(system_call, source_file, executable_file) {                                          \
-    int updated = 0;                                                                                            \
-    CHECK_TRACKED_PROGRAMS(system_call, executable_file);                                                       \
-    if (!updated && file_last_change(source_file) > file_last_change(executable_file)) {                        \
-        int exit_code = system_call;                                                                            \
-        if (exit_code != 0) {                                                                                   \
-            printf(RED "program finished with exit code %d" NATURAL "\n", exit_code);                           \
-            assert(0 && "Bad exit code");                                                                       \
-        }                                                                                                       \
-        updated = 1;                                                                                            \
-    }                                                                                                           \
-    if (!updated) printf(ORANGE "Skip system call \"%s\"" NATURAL "\n", #system_call);                          \
-}
+struct FilesContext {
+    const char*        home_dir = NULL;
+    const char*     source_file = NULL;
+    const char* executable_file = NULL;
 
-int run_cpu(const char* source_file, const char* executable_file);
+    const char* compile_asm = NULL;
+    const char* compile_dis = NULL;
+    const char* compile_cpu = NULL;
+
+    int updated = 0;
+};
+
+int                run_cpu(FilesContext* context);
+int check_tracked_programs(FilesContext* context, const char* regarding_file);
 
 #endif //SIMPLEPROCESSOR_RUN_CPU_H

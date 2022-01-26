@@ -539,7 +539,7 @@ int Tree_dump_graph(Tree* tree, const char* reason, FILE* log, int show_parent_e
 
     fputs("<h1 align=\"center\">Dump Tree</h1>\n<pre>\n", log);
     Tree_dump(tree, reason, log);
-    SPR_FPUTS(log, "</pre>\n<img src=\"logs/graph_%ld.png\">\n\n", seconds);
+    SPR_FPUTS(log, "</pre>\n<img src=\"graph_%ld.png\">\n\n", seconds);
 
     return (int) seconds;
 }

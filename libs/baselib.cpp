@@ -104,6 +104,7 @@ char* delete_spaces(char* string) {
         old_ptr++;
     }
     *new_ptr = '\0';
+    //! TODO: Add realloc?
 
     return string;
 }

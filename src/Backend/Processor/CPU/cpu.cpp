@@ -105,7 +105,7 @@ int execute_commands(BinCommand* mcodes, int n_commands, Processor* processor) {
                 break;
             }
         }
-        sleep(SLEEP);
+        LOG1(sleep(SLEEP););
     }
 
     LOG1(labels_dtor(&labels););
