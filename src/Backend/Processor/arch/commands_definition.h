@@ -57,7 +57,7 @@ COMMAND_DEFINITION( push,  2, 1, 1, 0b1111110011111100,  {
     int arg = 0;
     int need_prec = HAS_NUMBER && (HAS_REGISTER + !HAS_REGISTER * !HAS_RAM);
     if (HAS_REGISTER) arg += read_from_reg(REG, ARG(0, REGISTER_BIT));
-    if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT) * pow(10, PRECISION_ * need_prec);
+    if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT) * pow(10, PRECISION_VAL * need_prec);
     if (HAS_RAM)      arg  = RAM(arg);
     
     PUSH(arg);
@@ -115,7 +115,7 @@ COMMAND_DEFINITION( sub,   8, 0, 0, 0b0000000000000000,  {
 })
 
 COMMAND_DEFINITION( mul,   9, 0, 0, 0b0000000000000000,  {
-    PUSH(POP * POP * pow(10, -PRECISION_));
+    PUSH(POP * NEG_PRECISION * POP);
     return OK_;
 })
 
@@ -128,19 +128,19 @@ COMMAND_DEFINITION( div,  10, 0, 0, 0b0000000000000000,  {
         return BREAK_;
     }
 
-    PUSH(arg2 / (arg1 * pow(10, -PRECISION_)));
+    PUSH(arg2 / (arg1 * NEG_PRECISION));
     return OK_;
 })
 
 COMMAND_DEFINITION( mod,  11, 1, 1, 0b0000000000000100,  {
-    PUSH(POP % ARG(0, NUMBER_BIT));
+    PUSH(((int)(POP * NEG_PRECISION) % ARG(0, NUMBER_BIT)) * POS_PRECISION);
     return OK_;
 })
 
 COMMAND_DEFINITION( sqr,  12, 0, 0, 0b0000000000000000,  {
     int arg1 = POP;
 
-    PUSH(arg1 * arg1);
+    PUSH(arg1 * NEG_PRECISION * arg1);
     return OK_;
 })
 
@@ -152,7 +152,7 @@ COMMAND_DEFINITION( sqrt, 13, 0, 0, 0b0000000000000000,  {
         return BREAK_;
     }
 
-    PUSH((int)sqrt(arg1));
+    PUSH((int)(sqrt(arg1 * NEG_PRECISION) * POS_PRECISION));
     return OK_;
 })
 
@@ -174,36 +174,18 @@ COMMAND_DEFINITION( in,   15, 0, 0, 0b0000000000000000,  {
         while (getchar() != '\n') continue;
     }
 
-    PUSH(num);
+    PUSH(num * (int)POS_PRECISION);
     return OK_;
 })
 
-COMMAND_DEFINITION( inv,  16, 0, 0, 0b0000000000000000,  {
-    printf("Input number..\n");
-    
-    int num = poisons::UNINITIALIZED_INT;
-    while (scanf("%d", &num) != 1) {
-        printf("NaN\n");
-        while (getchar() != '\n') continue;
-    }
-
-    PUSH(num * (int)pow(10, PRECISION_));
-    return OK_;
-})
-
-COMMAND_DEFINITION( out,  17, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( out,  16, 0, 0, 0b0000000000000000,  {
     OUT;
-    return OK_;
-})
-
-COMMAND_DEFINITION( outv, 18, 0, 0, 0b0000000000000000,  {
-    OUTV;
     return OK_;
 })
 // ----------------------------------------------------------------------------
 
 // Jump-types commands---------------------------------------------------------
-COMMAND_DEFINITION( jmp,  19, 1, 1, 0b0000000000000010,  {
+COMMAND_DEFINITION( jmp,  17, 1, 1, 0b0000000000000010,  {
     IP = ARG(0, LABEL_BIT) - 1;
     return IP;
 })
@@ -221,23 +203,23 @@ COMMAND_DEFINITION( name, code, 1, 1, 0b0000000000000010, {                     
 })
 #include "cond_jumps_definition.h"
 #undef COND_JUMP_DEFINITION
-/* !NOTE! last command code in cond_jumps_definition.h is       25      !NOTE! */
+/* !NOTE! last command code in cond_jumps_definition.h is       23      !NOTE! */
 
-COMMAND_DEFINITION( call, 26, 1, 1, 0b0000000000000010,  {
+COMMAND_DEFINITION( call, 24, 1, 1, 0b0000000000000010,  {
     PUSH_C(IP + 1);
 
     IP = ARG(0, LABEL_BIT) - 1;
     return IP;
 })
 
-COMMAND_DEFINITION( ret,  27, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( ret,  25, 0, 0, 0b0000000000000000,  {
     IP = POP_C - 1;
     return IP;
 })
 // ----------------------------------------------------------------------------
 
 // Draw commands---------------------------------------------------------------
-COMMAND_DEFINITION( draw, 28, 2, 2, 0b1111110011111100,  {
+COMMAND_DEFINITION( draw, 26, 2, 2, 0b1111110011111100,  {
     int arg1 = 0;
     int arg2 = 0;
 
@@ -260,7 +242,7 @@ COMMAND_DEFINITION( draw, 28, 2, 2, 0b1111110011111100,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( cat,  29, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( cat,  27, 0, 0, 0b0000000000000000,  {
    printf("____________________$$____________$$_____\n"
           "_____________ _____$___$________$___$____\n"
           "__________________$_____$$$$$$_____ $____\n"

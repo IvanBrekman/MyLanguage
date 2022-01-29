@@ -7,6 +7,10 @@
 #define NODE_NAME           DATA.value.name
 #define NODE_NUMBER         DATA.value.number
 
+#define LEFT_NODE_DATA      node->left->data
+#define LEFT_NODE_TYPE      LEFT_NODE_DATA.type
+#define LEFT_NODE_NAME      LEFT_NODE_DATA.value.name
+
 #define IS_NUMBER           (NODE_TYPE == data_type::CONST_T)
 #define IS_OPERATOR         (NODE_TYPE == data_type::OPR_T)
 #define IS_NAME             (NODE_TYPE == data_type::VAR_T)
@@ -48,4 +52,14 @@
 
 #define IS_VARIABLE(name)   check_name_type(node, context, name, name_type::VARIABLE)
 #define IS_FUNCTION(name)   check_name_type(node, context, name, name_type::FUNCTION)
-#define IS_STD_FUNCTION     (is_std_func(node, context) != -1)
+#define IS_STD_FUNCTION     is_std_func(node, context)
+
+#define PROCESS_COMPARISON(jmp, index) {        \
+    ADD_ASM_CODE("%s add1_%d", jmp, index);     \
+    ADD_ASM_CODE("push 0");                     \
+    ADD_ASM_CODE("jmp next_%d\n", index);       \
+                                                \
+    ADD_ASM_CODE("add1_%d:", index);            \
+    ADD_ASM_CODE("   push 1");                  \
+    ADD_ASM_CODE("next_%d:\n", index);            \
+}

@@ -27,7 +27,7 @@ int print(FILE* asm_file) {
     ADD_ASM_CODE("push ax");
     ADD_ASM_CODE("push ax\n");
 
-    ADD_ASM_CODE("outv");
+    ADD_ASM_CODE("out");
     ADD_ASM_CODE("ret");
 
     ADD_FUNC_DESC("# end of 'print' function\n");
@@ -41,7 +41,7 @@ int enter(FILE* asm_file) {
     ADD_FUNC_DESC("# standard 'enter' function");
     ADD_FUNC_DESC("enter:");
 
-    ADD_ASM_CODE("inv");
+    ADD_ASM_CODE("in");
     ADD_ASM_CODE("ret");
 
     ADD_FUNC_DESC("# end of 'enter' function\n");
@@ -70,6 +70,7 @@ int prec(FILE* asm_file) {
     ADD_FUNC_DESC("precision:");
 
     ADD_ASM_CODE("pop $prec");
+    ADD_ASM_CODE("push $prec");
     ADD_ASM_CODE("ret");
 
     ADD_FUNC_DESC("# end of 'precision' function\n");

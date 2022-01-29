@@ -38,7 +38,7 @@ FrontContext* build_ast_tree(Tokens* tokens, const char* path) {
     set_new_root(front->AST_tree , result_data->node);
 
     LOG2(
-        print_name_table(context);
+        print_nametable(&NAME_TABLE);
         printf("\n");
         print_std_context(&STD_CTX);
     );
@@ -104,14 +104,14 @@ int check_type(const char* name, CompileContext* context, name_type type) {
     return ctx->global_view == type;
 }
 
-int print_name_table(const CompileContext* context) {
-    ASSERT_IF(VALID_PTR(context), "Invalid context ptr", -1);
+int print_nametable(const NameTable* nametable) {
+    ASSERT_IF(VALID_PTR(nametable), "Invalid nametable ptr", -1);
 
     printf("NameTable-------------------\n");
 
-    print_namespace(&GLOBAL_NAMESPACE);
-    for (int i = 0; i < NAME_TABLE.locals_amount; i++) {
-        print_namespace(&LOCAL_NAMESPACES[i]);
+    print_namespace(&nametable->global);
+    for (int i = 0; i < nametable->locals_amount; i++) {
+        print_namespace(&nametable->locals[i]);
     }
     printf("----------------------------\n");
 
@@ -482,6 +482,8 @@ GRAMMAR_RULE(Vdef) {
     if (RULE_DONE(func_ctx)) {
         CHECK_REDEFINITION(MAIN_NAME);
         ADD_NAME(name_type::VARIABLE, MAIN_NAME);
+
+        REBIND_CTX_LEFT(data_type::VAR_T, strdup("def"));
         RETURN_COMPLETED;
     }
 
@@ -653,7 +655,7 @@ int SyntaxError(const char* description, const CompileContext* context) {
     ASSERT_IF(VALID_PTR(description), "Invalid description ptr", -1);
     ASSERT_IF(VALID_PTR(context),     "Invalid context ptr",     -1);
 
-    print_name_table(context);
+    print_nametable(&NAME_TABLE);
 
     printf(RED "SyntaxError\n" NATURAL);
     if (VALID_PTR(context->expected_sym)) printf("%s " PURPLE "'%s'" NATURAL, description, context->expected_sym);

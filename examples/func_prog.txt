@@ -1,8 +1,8 @@
 func SquareEquiation(a, b, c) {
     def d = a * a - 4 * a * c;
 
-    def ans1;
-    def ans2;
+    def ans1 = -1;
+    def ans2 = -1;
     if   (d <  0) return -666;
     elif (d == 0) {ans1 = ans2 = -b / (2 * a);return ans1;}
     else {

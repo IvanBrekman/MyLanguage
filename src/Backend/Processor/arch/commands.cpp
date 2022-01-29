@@ -9,6 +9,8 @@
 #include "helper.h"
 #include "commands.h"
 
+#define MAX(num1, num2) ((num1 > num2) ? num1 : num2)
+
 Processor processor = { };
 
 Processor* init_processor() {
@@ -46,14 +48,18 @@ int processor_dump(FILE* log) {
 
     printf("\n             ");
     for (int i = 0; i < 40; i++) {
-        printf("%2d", i);
+        int shift = MAX(digits_number(processor.RAM[i]), digits_number(i));
+        printf("%*d", shift, i);
         if (i + 1 < 40) printf("  ");
     }
 
     printf("\nRAM:        [");
     for (int i = 0; i < 40; i++) {
         if (processor.RAM[i]) printf(PURPLE);
-        printf("%2d", processor.RAM[i]);
+
+        int shift = MAX(digits_number(processor.RAM[i]), digits_number(i));
+        printf("%*d", shift, processor.RAM[i]);
+
         if (processor.RAM[i]) printf(NATURAL);
 
         if (i + 1 < 40) printf(", ");

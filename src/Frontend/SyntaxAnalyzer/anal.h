@@ -104,7 +104,7 @@ NameContext* defined_name(const char* name, CompileContext* context);
 int    check_redefinition(const char* name, CompileContext* context);
 int check_type(const char* name, CompileContext* context, name_type type);
 
-int print_name_table (const CompileContext* context);
+int print_nametable (const NameTable* nametable);
 int print_namespace  (const Namespace* namespace_);
 int print_std_context(      StdContext* std_ctx);
 int is_reserved_name (const char* name);

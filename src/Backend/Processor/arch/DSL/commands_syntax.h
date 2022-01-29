@@ -37,16 +37,12 @@ To create new DSL word add new define with name and replaced text:
 
 #define ARG(number, type)       argv[(number * TYPES_AMOUNT) + type]
 
-#define PRECISION_              read_from_reg(REG, system_registers::VALUE_PRECISION)
+#define PRECISION_VAL           read_from_reg(REG, system_registers::VALUE_PRECISION)
+#define POS_PRECISION           pow(10,  PRECISION_VAL)
+#define NEG_PRECISION           pow(10, -PRECISION_VAL)
 
 #define OUT {                                                                                                \
     if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
-    printf("%d\n", POP);                                                                                     \
-    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
-}
-
-#define OUTV {                                                                                               \
-    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
-    printf("%.*f\n", PRECISION_, POP * pow(10, -PRECISION_));                                                \
+    printf("%.*f\n", PRECISION_VAL, POP * NEG_PRECISION);                                                \
     if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
 }

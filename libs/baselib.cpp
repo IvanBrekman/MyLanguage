@@ -170,7 +170,10 @@ int is_number(char* string) {
 int digits_number(int number, int radix) {
     ASSERT_IF(radix > 1, "Incorrect radix value", -1);
 
-    int digits = 0;
+    if (number == 0) return 1;
+
+    int digits = number < 0;
+        number = abs(number);
     while (number > 0) {
         number /= radix;
         digits++;

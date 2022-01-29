@@ -243,8 +243,8 @@ int parse_arg(const char* arg, int* argv) {
     }
 
     argc = parse_len = 0;
-    argc = sscanf(arg, "%[a-zA-Z_$]%n", name, &parse_len);
-    LOG2(printf( "[a-zA-Z]\n"
+    argc = sscanf(arg, "%[a-zA-Z_$0-9]%n", name, &parse_len);
+    LOG2(printf( "[a-zA-Z_$0-9]\n"
                 "sscanf res : %d\n"
                 "name       : \"%s\"\n"
                 "const_value: \"%s\"\n"
@@ -252,7 +252,7 @@ int parse_arg(const char* arg, int* argv) {
                 "arg len    : %d\n\n",
                 argc, name, const_val, parse_len, arg_len);
     );
-    if (argc == 1 && (parse_len == arg_len)) {
+    if (argc == 1 && (parse_len == arg_len) && !IS_DIGIT(arg[0])) {
         if (get_reg_by_name(&reg_tmp, name) != -1) {
             if (VALID_PTR(argv)) {
                 argv[REGISTER_BIT] = get_reg_by_name(&reg_tmp, name);
