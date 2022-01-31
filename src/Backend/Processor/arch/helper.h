@@ -10,9 +10,10 @@
 #include "../processor_config.h"
 
 // Registers-------------------------------------------------------------------
-static const char* REG_NAMES[] = { "ax", "bx", "cx", "dx", "$prec" };
+static const char* REG_NAMES[] = { "ax", "bx", "cx", "dx", "$prec", "$bp" };
 enum system_registers {
-    VALUE_PRECISION = 4
+    VALUE_PRECISION = 4,
+    BASE_POINTER    = 5
 };
 // ----------------------------------------------------------------------------
 

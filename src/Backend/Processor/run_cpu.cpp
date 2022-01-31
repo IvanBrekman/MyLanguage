@@ -124,7 +124,7 @@ int check_tracked_programs(FilesContext* context, const char* regarding_file) {
         sprintf(full_file, "%s/%s", context->home_dir, tracked_program);
 
         if (file_last_change(full_file) > file_last_change(regarding_file)) {
-            LOG1(printf("Start compiling processor...\n"););
+            LOG1(printf("Start compiling processor...\n\n"););
 
             SYS_COMPILE(context->compile_asm);
             SYS_COMPILE(context->compile_dis);

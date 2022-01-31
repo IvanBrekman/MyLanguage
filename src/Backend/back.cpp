@@ -3,7 +3,6 @@
 //
 
 #include "back.h"
-#include "MemoryDistributor/memdis.h"
 #include "AssemblerGenerator/asm_gen.h"
 
 BackContext* Back(const FrontContext* context) {
@@ -12,9 +11,6 @@ BackContext* Back(const FrontContext* context) {
     LOG1(printf(ORANGE "\n++++++++++ BACKEND START WORKING ++++++++++\n\n\n" NATURAL););
 
     BackContext* ctx = NEW_PTR(BackContext, 1);
-
-    AllocateContext* allocate_data = allocate_memory(context->nametable);
-    WAIT_INPUT;
 
     int gen = generate_asm_code_from_tree(context);
     ctx->result = gen;

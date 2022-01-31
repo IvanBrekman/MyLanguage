@@ -5,13 +5,16 @@
 #ifndef CONSTANTSH
 #define CONSTANTSH
 
-// Backend/MemoryDistributor/memdis.h------------------------------------------
-const int CONST_MEMORY_START = 10;
+// Backend/AssemblerGenerator/asm_gen.h------------------------------------------
+const int CONST_MEMORY_START     = 10;
+const int LOCALS_PER_STACK_FRAME = 20;
 
 static const char* ASM_CODE_FILE = "logs/processor_work/asm_code.txt";
 // ----------------------------------------------------------------------------
 
 // Backend/Processor-----------------------------------------------------------
+const int PRINTED_RAM_BLOCKS     = 3;
+
 static const char* HOME_DIR = "src/Backend/Processor";
 // ----------------------------------------------------------------------------
 

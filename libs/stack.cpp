@@ -234,8 +234,8 @@ int push(Stack* stack, stack_el_t value, int* error) {
 
     if (stack->size == stack->capacity) {
         if (VALIDATE_LEVEL >= WEAK_VALIDATE) {
-            printf("stack->size(%d) == stack->capacity(%d): Capacity increase from %d to %d\n",
-                   stack->size, stack->capacity, stack->capacity, stack->capacity < CAP_BORDER ? 2 * stack->capacity : stack->capacity + CAP_STEP);
+            LOG1(printf("stack->size(%d) == stack->capacity(%d): Capacity increase from %d to %d\n",
+                   stack->size, stack->capacity, stack->capacity, stack->capacity < CAP_BORDER ? 2 * stack->capacity : stack->capacity + CAP_STEP););
         }
         change_capacity(stack, stack->capacity < CAP_BORDER ? 2 * stack->capacity : stack->capacity + CAP_STEP, error);
     }
@@ -275,26 +275,26 @@ int  pop(Stack* stack, int* error) {
 
     if (stack->size >= CAP_BORDER && (stack->size + 2 * CAP_STEP) == stack->capacity) {
         if (VALIDATE_LEVEL >= WEAK_VALIDATE) {
-            printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
-                   stack->size, stack->capacity, stack->capacity, stack->capacity - CAP_STEP);
+            LOG1(printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
+                   stack->size, stack->capacity, stack->capacity, stack->capacity - CAP_STEP););
         }
         change_capacity(stack, stack->capacity - CAP_STEP, error);
     } else if (stack->capacity > CAP_BORDER && stack->size * 2 == CAP_BORDER) {
         if (VALIDATE_LEVEL >= WEAK_VALIDATE) {
-            printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
-                   stack->size, stack->capacity, stack->capacity, stack->capacity - CAP_STEP);
+            LOG1(printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
+                   stack->size, stack->capacity, stack->capacity, stack->capacity - CAP_STEP););
         }
         change_capacity(stack, stack->capacity - CAP_STEP, error);
     } else if (stack->size >= CAP_STEP && stack->size * 4 == stack->capacity) {
         if (VALIDATE_LEVEL >= WEAK_VALIDATE) {
-            printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
-                   stack->size, stack->capacity, stack->capacity, stack->capacity / 2);
+            LOG1(printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
+                   stack->size, stack->capacity, stack->capacity, stack->capacity / 2););
         }
         change_capacity(stack, stack->capacity / 2, error);
     } else if (stack->size == 0 && stack->capacity > CAP_STEP) {
         if (VALIDATE_LEVEL >= WEAK_VALIDATE) {
-            printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
-                   stack->size, stack->capacity, stack->capacity, CAP_STEP);
+            LOG1(printf("stack->size(%d), stack->capacity(%d): Capacity decrease from %d to %d\n",
+                   stack->size, stack->capacity, stack->capacity, CAP_STEP););
         }
         change_capacity(stack, CAP_STEP, error);
     }
@@ -339,10 +339,11 @@ int change_capacity(Stack* stack, int new_capacity, int* error) {
     CHECK_SOFT_ERROR(stack, Stack, error);
 
     if (VALIDATE_LEVEL >= WEAK_VALIDATE) {
-        printf("Capacity:     %d\n"
-               "Size:         %d\n"
-               "New capacity: %d\n\n",
-               stack->capacity, stack->size, new_capacity);
+        LOG1(printf("Capacity:     %d\n"
+                    "Size:         %d\n"
+                    "New capacity: %d\n\n",
+                    stack->capacity, stack->size, new_capacity);
+        );
     }
 
     stack->data = (stack_el_t*)((char*)stack->data - sizeof(long long));

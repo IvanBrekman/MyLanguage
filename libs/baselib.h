@@ -29,7 +29,7 @@
 #define dbg(code)      do { printf("%s:%d\n", __FILE__, __LINE__); code } while (0)
 #define LOCATION(var)  { TYPE, #var, __FILE__, __FUNCTION__, __LINE__ }
 #define VALID_PTR(ptr) !isbadreadptr((const void*)(ptr))
-#define WAIT_INPUT     do { if (EXECUTE_WAITINGS == 1) { printf(BLUE "Press any button...\n" NATURAL); getchar(); } } while(0)
+#define WAIT_INPUT     do { if (EXECUTE_WAITINGS == 1 && LOG_PRINTF > 0) { printf(BLUE "Press any button...\n" NATURAL); getchar(); } } while(0)
 
 #define COLORED_OUTPUT(str, color, file) IS_TERMINAL(file) ? (color str NATURAL) : str
 #define IS_TERMINAL(file)                (file == stdin) || (file == stdout) || (file == stderr)

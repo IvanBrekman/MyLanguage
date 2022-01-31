@@ -199,10 +199,14 @@ GRAMMAR_RULE(Statement) {
 
     if (EQUAL_LEXEM(data_type::OPR_T, START_BLOCK)) {
         TOKENS_PTR++;
-        if (EQUAL_LEXEM(data_type::OPR_T, END_BLOCK)) RETURN_WITH_REBIND(END_BLOCK, data_type::OPR_T, strdup(";"));
+        if (EQUAL_LEXEM(data_type::OPR_T, END_BLOCK)) {
+            if (REQUIRE_RETURN) THROW_ERROR("Expected return in function");
+            RETURN_WITH_REBIND(END_BLOCK, data_type::OPR_T, strdup(";"));
+        }
 
         REQUIRE_RETURN = 0;
 
+        printf(RED "req ret: %d\n" NATURAL, REQUIRE_RETURN);
         func_ctx = CALL_RULE(Statement);
         if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Statement after START_BLOCK symbol");
 
@@ -257,6 +261,8 @@ GRAMMAR_RULE(Fdef) {
 
     if (!EQUAL_LEXEM(data_type::VAR_T, "func")) RETURN_NOT_COMPLETED;
     TOKENS_PTR++;
+
+    if (IN_FUNCTION) THROW_ERROR("Function definition in another function");
 
     func_ctx = CALL_RULE(Id);
     if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected func name");
@@ -500,9 +506,12 @@ GRAMMAR_RULE(Ass) {
     SyntaxContext* variable   = CALL_RULE(Id);
     if (!RULE_DONE(variable)) RETURN_NOT_COMPLETED;
 
-    if (!SOFT_REQUIRE("=") || IS_FUNCTION(variable->main_name)) {
+    if (!SOFT_REQUIRE("=")) {
         TOKENS_PTR--;
         RETURN_NOT_COMPLETED;
+    } else if (IS_FUNCTION(variable->main_name)) {
+        TOKENS_PTR -= 2;
+        THROW_ERROR("Attempt to redefine function as variable");
     }
 
     SyntaxContext* expression = CALL_RULE(Exp);

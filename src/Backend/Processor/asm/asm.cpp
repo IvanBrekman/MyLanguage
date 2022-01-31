@@ -71,6 +71,7 @@ int assembly(const char* source_file, const char* executable_file, int label_ass
     LOG1(printf("All commands (asm):\n");
         for (int i = 0; i < n_commands; i++) {
             print_text(&text_commands[i], ", ");
+            text_commands[i].lines;
         }
         printf("\n");
     );
@@ -99,7 +100,7 @@ int assembly(const char* source_file, const char* executable_file, int label_ass
     return exit_codes::OK;
 }
 
-Text*                   get_tcom(Text* data) {
+Text* get_tcom(Text* data) {
     assert(VALID_PTR(data) && "Invalid data ptr");
 
     Text* commands = (Text*)calloc(data->lines, sizeof(Text));
@@ -126,6 +127,17 @@ Text*                   get_tcom(Text* data) {
         }
 
         int args = replace(str_command, data->text[i].len, ' ', '\0') + 1;
+
+        char* insert_ptr = str_command;
+        char*  check_ptr = str_command;
+        for (int _ = 0; _ < data->text[i].len; _++) {
+            if (!(*check_ptr == '\0' && *(check_ptr - 1) == '\0')) {
+                *insert_ptr = *check_ptr;
+                insert_ptr++;
+            } else args--;
+            check_ptr++;
+        } *insert_ptr = '\0';
+
         Text command = {
                 str_command,
                 data->text[i].len + 1,
@@ -140,7 +152,11 @@ Text*                   get_tcom(Text* data) {
     data->lines -= comment_str;
     return commands;
 }
-Text                  check_tcom(const Text* tcom, int n_commands, int label_assembly) {
+
+Text check_tcom(const Text* tcom, int n_commands, int label_assembly) {
+    Labels tmp_lab = { };
+    labels_ctor(&tmp_lab);
+
     for (int i = 0; i < n_commands; i++) {
         Text cmd = tcom[i];
 
@@ -151,10 +167,15 @@ Text                  check_tcom(const Text* tcom, int n_commands, int label_ass
                 errno = compile_errors::UNKNOWN_COMMAND;
                 return cmd;
             }
-            if (possible_label(&labels, cmd.text[0].ptr) == 0 && label_assembly) {
+            if (possible_label(&tmp_lab, cmd.text[0].ptr) == 0 && label_assembly) {
                 errno = compile_errors::REPEAT_LABEL_DEFINITION;
                 return cmd;
             }
+
+            char* label = strdup(cmd.text[0].ptr);
+            char* ptr = strchr(label, ':');
+            *ptr = '\0';
+            write_label(&tmp_lab, label, 0);
             continue;
         }
 
@@ -175,6 +196,7 @@ Text                  check_tcom(const Text* tcom, int n_commands, int label_ass
 
     return tcom[0];
 }
+
 BinCommand* get_mcodes_from_tcom(const Text* commands, int* n_commands) {
     BinCommand* bit_cmd = (BinCommand*)calloc(*n_commands, sizeof(BinCommand));
 
@@ -225,8 +247,8 @@ int parse_arg(const char* arg, int* argv) {
     arg = arg + cond;                                                       // If arg starts with '[', it is RAM address, with shifting arg ptr to generalize parsing 
 
     int parse_len = 0;
-    int argc = sscanf(arg, "%[a-zA-Z_]+%[0-9]%n", name, const_val, &parse_len);
-    LOG2(printf( "[a-z]+[0-9]\n"
+    int argc = sscanf(arg, "%[a-zA-Z_$]+%[0-9]%n", name, const_val, &parse_len);
+    LOG2(printf( "[a-zA-Z_$]+[0-9]\n"
                 "sscanf res : %d\n"
                 "name       : \"%s\"\n"
                 "const_value: \"%s\"\n"

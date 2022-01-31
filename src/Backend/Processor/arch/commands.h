@@ -39,6 +39,7 @@ int get_processor_ip();
 int set_processor_ip(int value);
 
 int processor_dump(FILE* log=stdout);
+int RAM_dump(int start_index, int step, int block_number);
 // ----------------------------------------------------------------------------
 
 // Commands prototypes---------------------------------------------------------

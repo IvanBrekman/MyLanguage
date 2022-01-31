@@ -69,7 +69,28 @@ int prec(FILE* asm_file) {
     ADD_FUNC_DESC("# standard 'precision' function");
     ADD_FUNC_DESC("precision:");
 
+    ADD_ASM_CODE("push $prec  # check if prec value is already changed");
+    ADD_ASM_CODE("push 0");
+    ADD_ASM_CODE("jne break_prec\n");
+
     ADD_ASM_CODE("pop $prec");
+
+    ADD_ASM_CODE("push $prec  # check if prec value is negative");
+    ADD_ASM_CODE("push 0");
+    ADD_ASM_CODE("jl break_prec");
+    ADD_ASM_CODE("jmp next_precision\n");
+
+    ADD_ASM_CODE("break_prec:");
+    ADD_ASM_CODE("    abrt\n");
+
+    ADD_ASM_CODE("next_precision:");
+    ADD_ASM_CODE("# Update bp value")
+    ADD_ASM_CODE("push 1");
+    ADD_ASM_CODE("push $bp");
+    ADD_ASM_CODE("dmul");
+    ADD_ASM_CODE("pop $bp");
+    ADD_ASM_CODE("# ---------------\n");
+
     ADD_ASM_CODE("push $prec");
     ADD_ASM_CODE("ret");
 

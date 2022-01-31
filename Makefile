@@ -2,7 +2,7 @@ cr:
 	clear
 	gcc main.cpp   libs/baselib.cpp libs/file_funcs.cpp libs/stack.cpp libs/tree.cpp 										\
 	               src/Frontend/SyntaxAnalyzer/anal.cpp src/Frontend/Tokenizer/token.cpp src/Frontend/front.cpp				\
-				   src/Backend/back.cpp src/Backend/MemoryDistributor/memdis.cpp src/Backend/AssemblerGenerator/asm_gen.cpp	\
+				   src/Backend/back.cpp src/Backend/AssemblerGenerator/asm_gen.cpp	\
 				   src/StandardLibrary/functions.cpp																		\
 		-lstdc++ -lm -I . -o main.out
 	./main.out test.txt
@@ -10,7 +10,7 @@ cr:
 c:
 	gcc main.cpp   libs/baselib.cpp libs/file_funcs.cpp libs/stack.cpp libs/tree.cpp 										\
 	               src/Frontend/SyntaxAnalyzer/anal.cpp src/Frontend/Tokenizer/token.cpp src/Frontend/front.cpp				\
-				   src/Backend/back.cpp src/Backend/MemoryDistributor/memdis.cpp src/Backend/AssemblerGenerator/asm_gen.cpp	\
+				   src/Backend/back.cpp src/Backend/AssemblerGenerator/asm_gen.cpp	\
 				   src/StandardLibrary/functions.cpp																		\
 		-lstdc++ -lm -I . -o main.out
 

@@ -47,13 +47,9 @@ int         print_reg(Registers* reg) {
     assert(VALID_PTR(reg) && "Invalid reg ptr");
     
     for (int i = 0; i < MAX_REGISTERS; i++) {
-        printf("%s: % 2d", reg->names[i], reg->regs[i]);
-
-        if (reg->regs[i] == poisons::UNINITIALIZED_INT) {
-            printf(" (uninitialized) ");
+        if (reg->regs[i] != poisons::UNINITIALIZED_INT) {
+            printf("%s: % 2d\n", reg->names[i], reg->regs[i]);
         }
-
-        printf("\n");
     }
 
     return MAX_REGISTERS;

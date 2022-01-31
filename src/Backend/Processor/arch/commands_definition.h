@@ -55,10 +55,11 @@ COMMAND_DEFINITION( abrt,  1, 0, 0, 0b0000000000000000,  {
 // Stack commands--------------------------------------------------------------
 COMMAND_DEFINITION( push,  2, 1, 1, 0b1111110011111100,  {
     int arg = 0;
-    int need_prec = HAS_NUMBER && (HAS_REGISTER + !HAS_REGISTER * !HAS_RAM);
+    int need_prec = HAS_NUMBER;
+
     if (HAS_REGISTER) arg += read_from_reg(REG, ARG(0, REGISTER_BIT));
     if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT) * pow(10, PRECISION_VAL * need_prec);
-    if (HAS_RAM)      arg  = RAM(arg);
+    if (HAS_RAM)      arg  = RAM((int)(arg * NEG_PRECISION));
     
     PUSH(arg);
 
@@ -71,9 +72,10 @@ COMMAND_DEFINITION( pop,   3, 0, 1, 0b1111110000110000,  {
     if (args_type > 0) {
         if (HAS_RAM) {
             int arg = 0;
+            int need_prec = HAS_NUMBER;
             if (HAS_REGISTER) arg += read_from_reg(REG, ARG(0, REGISTER_BIT));
-            if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT);
-            RAM(arg) = pop_value;
+            if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT) * pow(10, PRECISION_VAL * need_prec);
+            RAM((int)(arg * NEG_PRECISION)) = pop_value;
         } else {
             write_to_reg(REG, ARG(0, REGISTER_BIT), pop_value);
         }
@@ -267,3 +269,8 @@ COMMAND_DEFINITION( cat,  27, 0, 0, 0b0000000000000000,  {
    return OK_;
 })
 // ----------------------------------------------------------------------------
+
+COMMAND_DEFINITION( dmul, 28, 0, 0, 0b0000000000000000, {
+    PUSH(POP * POP);
+    return OK_;
+})

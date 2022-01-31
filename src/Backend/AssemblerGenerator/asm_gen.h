@@ -8,14 +8,16 @@
 #include "../back.h"
 
 struct ASMGenerateContext {
-         FILE* asm_file      = NULL;
+    FILE*            asm_file      = NULL;
 
-    NameTable* nametable     = NULL;
-    Namespace* cur_namespace = NULL;
-    StdContext* std_ctx      = NULL;
+    NameTable*       nametable     = NULL;
+    Namespace*       cur_namespace = NULL;
+
+    StdContext*      std_ctx       = NULL;
 };
 
 int generate_asm_code_from_tree(const FrontContext* context);
+int fill_variables_relative_address(NameTable* nametable);
 int add_standard_library(const ASMGenerateContext* context);
 int add_user_functions(const Node* node, ASMGenerateContext* context);
 
