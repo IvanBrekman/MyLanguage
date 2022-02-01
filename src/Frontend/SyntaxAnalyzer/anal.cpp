@@ -458,7 +458,7 @@ GRAMMAR_RULE(If_cond) {
     TOKENS_PTR++;
 
     func_ctx = CALL_RULE(Exp);
-    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected expression in if");
+    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected expression");
 
     if (!EQUAL_LEXEM(data_type::OPR_T, CLOSE_BRACKET)) THROW_ERROR("Expected CLOSE_BRACKET after expression");
     TOKENS_PTR++;
@@ -466,7 +466,7 @@ GRAMMAR_RULE(If_cond) {
 
     // Try get 'Statement'
     SyntaxContext* st = CALL_RULE(Statement);
-    if (!RULE_DONE(st)) THROW_ERROR("Expected statement after if");
+    if (!RULE_DONE(st)) THROW_ERROR("Expected statement");
 
     REBIND_CTX_LEFT(data_type::OPR_T, strdup("if"));
     REBIND_NODE(data_type::OPR_T, strdup("if_else"), st, child_type::LEFT);

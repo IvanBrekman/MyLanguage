@@ -19,23 +19,25 @@
 #define GLOBAL_NAMESPACE    NAMETABLE->global
 #define CURRENT_NAMESPACE   context->cur_namespace
 
+#define ASM_INDENT          context->asm_indent
 #define STD_CONTEXT         context->std_ctx
 #define STD_FUNC_PTR        STD_CONTEXT->func_ptr
 #define CURRENT_STD_FUNC    STD_CONTEXT->all_functions[STD_FUNC_PTR]
 
 #define IN_GLOBAL_NAMESPACE (CURRENT_NAMESPACE == &GLOBAL_NAMESPACE)
+#define FAN_VAN             printf("Press F to Fan Van")
 
-#define ADD_ASM_CODE(format...) {                   \
-    if (!IN_GLOBAL_NAMESPACE) {                     \
-        SPR_FPUTS(context->asm_file, "    ");       \
-    }                                               \
-    SPR_FPUTS(context->asm_file, format);           \
-    SPR_FPUTS(context->asm_file, "\n");             \
+#define ADD_ASM_CODE(format...) {                               \
+    if (ASM_INDENT > 0) {                                       \
+        SPR_FPUTS(context->asm_file, "%*s", ASM_INDENT, " ");   \
+    }                                                           \
+    SPR_FPUTS(context->asm_file, format);                       \
+    SPR_FPUTS(context->asm_file, "\n");                         \
 }
 
-#define ASSERT_CONTEXT {                                                            \
-    ASSERT_CTX;                                         \
-    ASSERT_IF(VALID_PTR(node), "Invalid node ptr", 0);  \
+#define ASSERT_CONTEXT {                                        \
+    ASSERT_CTX;                                                 \
+    ASSERT_IF(VALID_PTR(node), "Invalid node ptr", 0);          \
 }
 
 #define ASSERT_CTX {                                                                \
@@ -61,5 +63,5 @@
                                                 \
     ADD_ASM_CODE("add1_%d:", index);            \
     ADD_ASM_CODE("   push 1");                  \
-    ADD_ASM_CODE("next_%d:\n", index);            \
+    ADD_ASM_CODE("next_%d:\n", index);          \
 }

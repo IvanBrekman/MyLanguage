@@ -1,9 +1,5 @@
-func f(a, b) {
-    def sum = a + b;
-
-    def res = sum + mul(a, b);
-    return res;
+func f(a, b, c) {
+    return a = b + c;
 }
 
-def x = 1;
-print(f(x, x));
+print(f(1, 2, 3 + 3));

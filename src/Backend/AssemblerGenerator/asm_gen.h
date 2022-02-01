@@ -8,12 +8,14 @@
 #include "../back.h"
 
 struct ASMGenerateContext {
-    FILE*            asm_file      = NULL;
+    FILE*       asm_file      = NULL;
 
-    NameTable*       nametable     = NULL;
-    Namespace*       cur_namespace = NULL;
+    NameTable*  nametable     = NULL;
+    Namespace*  cur_namespace = NULL;
 
-    StdContext*      std_ctx       = NULL;
+    StdContext* std_ctx       = NULL;
+
+    int         asm_indent    = -1;
 };
 
 int generate_asm_code_from_tree(const FrontContext* context);
@@ -26,6 +28,7 @@ int processing_operator    (const Node* node, ASMGenerateContext* context);
 int processing_special_name(const Node* node, ASMGenerateContext* context);
 int processing_func_node   (const Node* node, ASMGenerateContext* context);
 int processing_if_node     (const Node* node, ASMGenerateContext* context);
+int processing_while_node  (const Node* node, ASMGenerateContext* context);
 
 int get_variable_address(const Node* node, ASMGenerateContext* context);
 int           print_node(const Node* node, ASMGenerateContext* context);

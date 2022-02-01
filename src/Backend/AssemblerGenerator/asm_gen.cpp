@@ -21,7 +21,8 @@ int generate_asm_code_from_tree(const FrontContext* front_context) {
 
         .nametable      = front_context->nametable,
         .cur_namespace  = &front_context->nametable->global,
-        .std_ctx        = front_context->std_ctx
+        .std_ctx        = front_context->std_ctx,
+        .asm_indent     = 0
     };
 
     fill_variables_relative_address(gen_ctx->nametable);
@@ -101,6 +102,11 @@ int processing_node(const Node* node, ASMGenerateContext* context) {
         node_counter++;
         return 1;
     }
+    if (IS_OPERATOR && EQUAL(NODE_NAME, "while")) {
+        processing_while_node(node, context);
+        node_counter++;
+        return 1;
+    }
 
     if (VALID_PTR(node->left))  processing_node(node->left,  context);
     if (VALID_PTR(node->right)) processing_node(node->right, context);
@@ -163,7 +169,10 @@ int processing_operator(const Node* node, ASMGenerateContext* context) {
         ADD_ASM_CODE("push [$bp+%d]", address);
     }
 
-    else ASSERT_IF(0, "Unknown operator", 0);
+    else {
+        LOG1(printf(RED "Name: '%s'\n" NATURAL, NODE_NAME););
+        ASSERT_IF(0, "Unknown operator", 0);
+    }
 
     ADD_ASM_CODE(" ");
     return 1;
@@ -236,6 +245,7 @@ int processing_func_node(const Node* node, ASMGenerateContext* context) {
     for (int i = 0; i < NAMETABLE->locals_amount; i++) {
         if (EQUAL(func_name, NAMETABLE->locals[i].id)) {
             CURRENT_NAMESPACE = &NAMETABLE->locals[i];
+            ASM_INDENT       += 4;
             break;
         }
     }
@@ -273,6 +283,7 @@ int processing_func_node(const Node* node, ASMGenerateContext* context) {
     ADD_ASM_CODE("ret\n");
 
     CURRENT_NAMESPACE = &GLOBAL_NAMESPACE;
+    ASM_INDENT       -= 4;
     ADD_ASM_CODE("# ++++++++++end of func logic++++++++++\n");
 
     return 1;
@@ -284,22 +295,55 @@ int processing_if_node(const Node* node, ASMGenerateContext* context) {
     int index = node_counter;
 
     ADD_ASM_CODE("# if_%d processing _________________\n", index);
+
+    ASM_INDENT += 2;
     ADD_ASM_CODE("# if condition----------");
     processing_node(node->left, context);
     ADD_ASM_CODE("# ----------------------\n");
+    ASM_INDENT -= 2;
 
     ADD_ASM_CODE("push 0");
     ADD_ASM_CODE("je else_%d\n", index);
 
     ADD_ASM_CODE("# if_%d:", index);
+    ASM_INDENT += 2;
     processing_node(node->right->left, context);
     ADD_ASM_CODE("jmp next_%d\n", index);
+    ASM_INDENT -= 2;
  
     ADD_ASM_CODE("else_%d:", index);
+    ASM_INDENT += 2;
     if (VALID_PTR(node->right->right)) processing_node(node->right->right, context);
+    ASM_INDENT -= 2;
     ADD_ASM_CODE("next_%d:", index);
 
-    ADD_ASM_CODE("# endif_%d _________________________", index);
+    ADD_ASM_CODE("# endif_%d _________________________\n", index);
+
+    return 1;
+}
+
+int processing_while_node(const Node* node, ASMGenerateContext* context) {
+    ASSERT_CONTEXT;
+
+    int index = node_counter;
+
+    ADD_ASM_CODE("# processing while_%d node__________", index);
+    ADD_ASM_CODE("while_cond_%d:", index);
+    ASM_INDENT += 2;
+    processing_node(node->left, context);
+    ADD_ASM_CODE("push 0");
+    ADD_ASM_CODE("jne while_body_%d", index);
+    ADD_ASM_CODE("jmp while_next_%d\n", index);
+    ASM_INDENT -= 2;
+
+    ADD_ASM_CODE("while_body_%d:", index);
+    ASM_INDENT += 2;
+    processing_node(node->right->left, context);
+    ADD_ASM_CODE("jmp while_cond_%d\n", index);
+    ASM_INDENT -= 2;
+
+    ADD_ASM_CODE("while_next_%d:", index);
+    ADD_ASM_CODE("# end of while_%d___________________\n", index);
 
     return 1;
 }
