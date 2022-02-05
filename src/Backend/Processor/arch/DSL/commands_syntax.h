@@ -41,8 +41,14 @@ To create new DSL word add new define with name and replaced text:
 #define POS_PRECISION           pow(10,  PRECISION_VAL)
 #define NEG_PRECISION           pow(10, -PRECISION_VAL)
 
-#define OUT {                                                                                                \
-    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
-    printf("%.*f\n", PRECISION_VAL, POP * NEG_PRECISION);                                                \
-    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);    \
+#define OUT {                                                                                               \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);   \
+    printf("%.*f ", PRECISION_VAL, POP * NEG_PRECISION);                                                    \
+    if (LOG_PRINTF) printf(RED "\n############################################################\n" NATURAL); \
+}
+
+#define NEW {                                                                                               \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL);   \
+    printf("%s\n", LOG_PRINTF ? "'\\n'" : "");                                                                                           \
+    if (LOG_PRINTF) printf(RED "############################################################\n" NATURAL); \
 }

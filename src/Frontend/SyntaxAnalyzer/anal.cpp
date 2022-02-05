@@ -556,7 +556,7 @@ GRAMMAR_RULE(Lvalue) {
 GRAMMAR_RULE(T) {
     INIT;
 
-    EXPRESSION_PRIORITY_RULE(P, "*", "/");
+    EXPRESSION_PRIORITY_RULE(P, "*", "/", "%");
 
     RETURN_COMPLETED;
 }

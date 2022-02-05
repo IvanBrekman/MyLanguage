@@ -43,13 +43,14 @@ int RAM_dump(int start_index, int step, int block_number);
 // ----------------------------------------------------------------------------
 
 // Commands prototypes---------------------------------------------------------
-#define COMMAND_DEFINITION(name, code, argc_min, argc_max, argv_m, body) int execute_ ## name(int args_type, int* argv);
+#define COMMAND_DEFINITION(name, argc_min, argc_max, argv_m, body) int execute_ ## name(int args_type, int* argv);
     #include "commands_definition.h"
 #undef COMMAND_DEFINITION
 // ----------------------------------------------------------------------------
 
+static int code_shift = 0;
 // Commands definition in array------------------------------------------------
-#define COMMAND_DEFINITION(name, code, argc_min, argc_max, argv, body) { #name, code, argc_min, argc_max, argv, execute_ ## name },
+#define COMMAND_DEFINITION(name, argc_min, argc_max, argv, body) { #name, code_shift++, argc_min, argc_max, argv, execute_ ## name },
 const CommandParameters ALL_COMMANDS[] {
     #include "commands_definition.h"
 };

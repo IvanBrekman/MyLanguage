@@ -40,7 +40,7 @@ static const char* END_STATEMENT = ";";
 static const char*  FINISH_TOKEN = "$";
 
 static const char* RESERVED_NAMES[] = {
-    "if", "else", "elif", "while", "for", "def", "func", "print"
+    "if", "else", "elif", "while", "for", "def", "func"
 };
 const int RESERVED_NAMES_AMOUNT = sizeof(RESERVED_NAMES) / sizeof(RESERVED_NAMES[0]);
 
@@ -51,7 +51,7 @@ const int NON_REQUIRED = 0;
 // Frontend/Tokenizer/token.h--------------------------------------------------
 static const char* OPERATORS[] = {
     "==", "!=", "<=", ">=",
-    ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$",
+    ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$", "%",
 };
 const char      LINE_COMMENT_SYMBOL = '#';
 const char MULTILINE_COMMENT_SYMBOL = '@';

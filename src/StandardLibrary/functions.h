@@ -11,12 +11,14 @@ int print(ASMGenerateContext* context);
 int enter(ASMGenerateContext* context);
 int sqrt (ASMGenerateContext* context);
 int prec (ASMGenerateContext* context);
+int abs  (ASMGenerateContext* context);
 
 const StandardFunction ALL_STANDARD_FUNCTIONS[] = {
-    { "print",     1, print, 1 },
+    { "print",     1, print, 0 },
     { "enter",     2, enter, 0, 0 },
     { "sqrt",      3, sqrt,  1, 1 },
-    { "precision", 4, prec,  1, 1 }
+    { "precision", 4, prec,  1, 1 },
+    { "abs",       5, abs,   1, 1 }
 };
 const int STD_FUNC_AMOUNT = sizeof(ALL_STANDARD_FUNCTIONS) / sizeof(ALL_STANDARD_FUNCTIONS[0]);
 

@@ -9,7 +9,6 @@ This file includes all definitions of processor commands
 
 Each command has:
     name
-    number code
     number of minimum args amount
     number of maximum args amount
     number, which shows allowed types of arguments **
@@ -34,7 +33,7 @@ Each command has:
 
        0b1111110011111100 (allowed RAM, register, number types and their combinations)
     
-    COMMAND_DEFINITION( name, 37, 0, 2, 0b0101010101010101, {
+    COMMAND_DEFINITION( name, 0, 2, 0b0101010101010101, {
         printf("This is test command\n");
         return OK_;
     })
@@ -43,17 +42,17 @@ You also can use DSL to create your commands or write them directly accessing to
 */
 
 // Break commands--------------------------------------------------------------
-COMMAND_DEFINITION( hlt,   0, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( hlt,  0, 0, 0b0000000000000000, {
     return EXIT_;
 })
 
-COMMAND_DEFINITION( abrt,  1, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( abrt, 0, 0, 0b0000000000000000, {
     return BREAK_;
 })
 // ----------------------------------------------------------------------------
 
 // Stack commands--------------------------------------------------------------
-COMMAND_DEFINITION( push,  2, 1, 1, 0b1111110011111100,  {
+COMMAND_DEFINITION( push, 1, 1, 0b1111110011111100, {
     int arg = 0;
     int need_prec = HAS_NUMBER;
 
@@ -66,7 +65,7 @@ COMMAND_DEFINITION( push,  2, 1, 1, 0b1111110011111100,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( pop,   3, 0, 1, 0b1111110000110000,  {
+COMMAND_DEFINITION( pop,  0, 1, 0b1111110000110000, {
     int pop_value = POP;
 
     if (args_type > 0) {
@@ -84,31 +83,31 @@ COMMAND_DEFINITION( pop,   3, 0, 1, 0b1111110000110000,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( vrf,   4, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( vrf,  0, 0, 0b0000000000000000, {
     int err = Stack_error(STACK);
     printf("Stack Verify: %s (%d)\n", Stack_error_desc(err), err);
 
     return OK_;
 })
 
-COMMAND_DEFINITION( dump,  5, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( dump, 0, 0, 0b0000000000000000, {
     DUMP;
     return OK_;
 })
 
-COMMAND_DEFINITION( prt,   6, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( prt,  0, 0, 0b0000000000000000, {
     PRINT;
     return OK_;
 })
 // ----------------------------------------------------------------------------
 
 // Arithmetic commands--------------------------------------------------------
-COMMAND_DEFINITION( add,   7, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( add,  0, 0, 0b0000000000000000, {
     PUSH(POP + POP);
     return OK_;
 })
 
-COMMAND_DEFINITION( sub,   8, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( sub,  0, 0, 0b0000000000000000, {
     int arg1 = POP;
     int arg2 = POP;
 
@@ -116,12 +115,12 @@ COMMAND_DEFINITION( sub,   8, 0, 0, 0b0000000000000000,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( mul,   9, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( mul,  0, 0, 0b0000000000000000, {
     PUSH(POP * NEG_PRECISION * POP);
     return OK_;
 })
 
-COMMAND_DEFINITION( div,  10, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( div,  0, 0, 0b0000000000000000, {
     int arg1 = POP;
     int arg2 = POP;
 
@@ -134,19 +133,24 @@ COMMAND_DEFINITION( div,  10, 0, 0, 0b0000000000000000,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( mod,  11, 1, 1, 0b0000000000000100,  {
+COMMAND_DEFINITION( dmul, 0, 0, 0b0000000000000000, {
+    PUSH(POP * POP);
+    return OK_;
+})
+
+COMMAND_DEFINITION( mod,  1, 1, 0b0000000000000100, {
     PUSH(((int)(POP * NEG_PRECISION) % ARG(0, NUMBER_BIT)) * POS_PRECISION);
     return OK_;
 })
 
-COMMAND_DEFINITION( sqr,  12, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( sqr,  0, 0, 0b0000000000000000, {
     int arg1 = POP;
 
     PUSH(arg1 * NEG_PRECISION * arg1);
     return OK_;
 })
 
-COMMAND_DEFINITION( sqrt, 13, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( sqrt, 0, 0, 0b0000000000000000, {
     int arg1 = POP;
 
     if (arg1 < 0) {
@@ -158,7 +162,7 @@ COMMAND_DEFINITION( sqrt, 13, 0, 0, 0b0000000000000000,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( abs,  14, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( abs,  0, 0, 0b0000000000000000, {
     int arg1 = POP;
 
     PUSH(arg1 >= 0 ? arg1 : -arg1);
@@ -167,7 +171,7 @@ COMMAND_DEFINITION( abs,  14, 0, 0, 0b0000000000000000,  {
 // ----------------------------------------------------------------------------
 
 // IO commands-----------------------------------------------------------------
-COMMAND_DEFINITION( in,   15, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( in,   0, 0, 0b0000000000000000, {
     printf("Input number..\n");
     
     int num = poisons::UNINITIALIZED_INT;
@@ -180,48 +184,52 @@ COMMAND_DEFINITION( in,   15, 0, 0, 0b0000000000000000,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( out,  16, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( out,  0, 0, 0b0000000000000000, {
     OUT;
+    return OK_;
+})
+
+COMMAND_DEFINITION( new,  0, 0, 0b0000000000000000, {
+    NEW;
     return OK_;
 })
 // ----------------------------------------------------------------------------
 
 // Jump-types commands---------------------------------------------------------
-COMMAND_DEFINITION( jmp,  17, 1, 1, 0b0000000000000010,  {
+COMMAND_DEFINITION( jmp,  1, 1, 0b0000000000000010, {
     IP = ARG(0, LABEL_BIT) - 1;
     return IP;
 })
 
-#define COND_JUMP_DEFINITION(name, code, sign)                                  \
-COMMAND_DEFINITION( name, code, 1, 1, 0b0000000000000010, {                     \
-    int first  = POP;                                                           \
-    int second = POP;                                                           \
-                                                                                \
-    if (second sign first) {                                                    \
-        IP = ARG(0, LABEL_BIT) - 1;                                             \
-    }                                                                           \
-                                                                                \
-    return IP;                                                                  \
+#define COND_JUMP_DEFINITION(name, sign)                                    \
+COMMAND_DEFINITION( name, 1, 1, 0b0000000000000010, {                       \
+    int first  = POP;                                                       \
+    int second = POP;                                                       \
+                                                                            \
+    if (second sign first) {                                                \
+        IP = ARG(0, LABEL_BIT) - 1;                                         \
+    }                                                                       \
+                                                                            \
+    return IP;                                                              \
 })
 #include "cond_jumps_definition.h"
 #undef COND_JUMP_DEFINITION
-/* !NOTE! last command code in cond_jumps_definition.h is       23      !NOTE! */
 
-COMMAND_DEFINITION( call, 24, 1, 1, 0b0000000000000010,  {
+COMMAND_DEFINITION( call, 1, 1, 0b0000000000000010, {
     PUSH_C(IP + 1);
 
     IP = ARG(0, LABEL_BIT) - 1;
     return IP;
 })
 
-COMMAND_DEFINITION( ret,  25, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( ret,  0, 0, 0b0000000000000000, {
     IP = POP_C - 1;
     return IP;
 })
 // ----------------------------------------------------------------------------
 
 // Draw commands---------------------------------------------------------------
-COMMAND_DEFINITION( draw, 26, 2, 2, 0b1111110011111100,  {
+COMMAND_DEFINITION( draw, 2, 2, 0b1111110011111100, {
     int arg1 = 0;
     int arg2 = 0;
 
@@ -244,7 +252,7 @@ COMMAND_DEFINITION( draw, 26, 2, 2, 0b1111110011111100,  {
     return OK_;
 })
 
-COMMAND_DEFINITION( cat,  27, 0, 0, 0b0000000000000000,  {
+COMMAND_DEFINITION( cat,  0, 0, 0b0000000000000000, {
    printf("____________________$$____________$$_____\n"
           "_____________ _____$___$________$___$____\n"
           "__________________$_____$$$$$$_____ $____\n"
@@ -269,8 +277,3 @@ COMMAND_DEFINITION( cat,  27, 0, 0, 0b0000000000000000,  {
    return OK_;
 })
 // ----------------------------------------------------------------------------
-
-COMMAND_DEFINITION( dmul, 28, 0, 0, 0b0000000000000000, {
-    PUSH(POP * POP);
-    return OK_;
-})

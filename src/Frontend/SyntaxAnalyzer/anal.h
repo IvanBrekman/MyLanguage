@@ -139,7 +139,7 @@ int is_std_name(CompileContext* context);
     Cmp         ::= Lvalue{[< > <= >= == !=]Lvalue}*
 
     Lvalue      ::= T{[+-]T}*
-    T           ::= P{[/*]P}*
+    T           ::= P{[/*%]P}*
     P           ::= {-}? '('Exp')' | Number | Call | StdFunc | Id
 
     Number      ::= [0-9]

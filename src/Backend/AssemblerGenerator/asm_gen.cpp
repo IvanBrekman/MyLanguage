@@ -160,6 +160,7 @@ int processing_operator(const Node* node, ASMGenerateContext* context) {
     }
     else if (EQUAL_OPER("*")) { ADD_ASM_CODE("mul"); }
     else if (EQUAL_OPER("/")) { ADD_ASM_CODE("div"); }
+    else if (EQUAL_OPER("%")) { ADD_ASM_CODE("mod"); }
 
     else if (EQUAL_OPER(">"))  { PROCESS_COMPARISON("jg",  node_counter); }
     else if (EQUAL_OPER("<"))  { PROCESS_COMPARISON("jl",  node_counter); }
@@ -201,17 +202,12 @@ int processing_special_name(const Node* node, ASMGenerateContext* context) {
         }
 
         if (ASM_LENGTH == 0) ADD_ASM_CODE(" ");
-        if (std_func_flag) {
-            FULL_LINE_COMMENT("Add 'call' command for standard func");
+        if (std_func_flag) {        // TODO - fix for print func
+            ADD_ASM_CODE("push %d", args_am);
+            PART_LINE_COMMENT("Add args amount of standard func");
+
             ADD_ASM_CODE("call %s", LEFT_NODE_NAME);
-
-            for (int i = 1; i < args_am; i++) {
-                ADD_ASM_CODE("pop");
-                PART_LINE_COMMENT("Delete std func result from stack");
-
-                ADD_ASM_CODE("call %s", LEFT_NODE_NAME);
-            }
-            FULL_LINE_COMMENT("End of 'call' command for std function (%s)", LEFT_NODE_NAME);
+            PART_LINE_COMMENT("Add 'call' command for standard func");
             ADD_ASM_CODE(" ");
         } else {
             ADD_ASM_CODE("push %d", LOCALS_PER_STACK_FRAME);

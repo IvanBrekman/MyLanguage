@@ -116,7 +116,7 @@ int set_processor_ip(int value) {
 }
 
 // Commands implementation-----------------------------------------------------
-#define COMMAND_DEFINITION(name, code, argc_min, argc_max, argv_m, body) int execute_ ## name(int args_type, int* argv) body
+#define COMMAND_DEFINITION(name, argc_min, argc_max, argv_m, body) int execute_ ## name(int args_type, int* argv) body
     #include "commands_definition.h"
 #undef COMMAND_DEFINITION
 // ----------------------------------------------------------------------------
