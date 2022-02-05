@@ -8,6 +8,8 @@
 #define VALIDATE_LEVEL   1
 #define EXECUTE_WAITINGS 1
 
+#define ALIGN_ASM_COMMENTS 1
+
 #define LOG_PRINTF 0
 #define LOG_GRAPH  1
 

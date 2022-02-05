@@ -18,12 +18,14 @@ int print(ASMGenerateContext* context) {
     ASM_INDENT += 4;
     ADD_ASM_CODE("pop  ax");
     ADD_ASM_CODE("push ax");
+    PART_LINE_COMMENT("Save args amount to ax and bx");
     ADD_ASM_CODE("pop  bx\n");
     ADD_ASM_CODE("__IB__start_print__:");
     ASM_INDENT += 2;
 
     ADD_ASM_CODE("push ax");
     ADD_ASM_CODE("push 0");
+    PART_LINE_COMMENT("Check continue");
     ADD_ASM_CODE("je __IB__finish_print__\n");
 
     ADD_ASM_CODE("out");
@@ -31,6 +33,7 @@ int print(ASMGenerateContext* context) {
     ADD_ASM_CODE("push 1");
     ADD_ASM_CODE("sub");
     ADD_ASM_CODE("pop ax");
+    PART_LINE_COMMENT("Decrease repeat amount")
     ADD_ASM_CODE("jmp __IB__start_print__\n");
 
     ASM_INDENT -= 2;
@@ -39,6 +42,7 @@ int print(ASMGenerateContext* context) {
 
     ADD_ASM_CODE("new");
     ADD_ASM_CODE("push bx");
+    PART_LINE_COMMENT("Add result to stack");
     ADD_ASM_CODE("ret");
     ASM_INDENT -= 6;
 
@@ -117,7 +121,7 @@ int prec(ASMGenerateContext* context) {
 
     ADD_ASM_CODE("pop");
     PART_LINE_COMMENT("Remove args amount from stack");
-    
+
     ADD_ASM_CODE("push $prec");
     PART_LINE_COMMENT("Check if prec value is already changed");
 

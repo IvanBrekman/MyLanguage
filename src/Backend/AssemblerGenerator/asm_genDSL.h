@@ -29,14 +29,15 @@
 #define IN_GLOBAL_NAMESPACE (CURRENT_NAMESPACE == &GLOBAL_NAMESPACE)
 #define FAN_VAN             printf("Press F to Fan Van")
 
-#define GENERATE_SPR_STRING(file, format...) {              \
-    char* string = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);  \
-    sprintf(string, format);                                \
-                                                            \
-    fputs(string, file);                                    \
-                                                            \
-    ASM_LENGTH += strlen(string);                           \
-    FREE_PTR(string, char);                                 \
+#define GENERATE_SPR_STRING(file, format...) {                      \
+    char* string = NEW_PTR(char, MAX_SPRINTF_STRING_SIZE);          \
+    sprintf(string, format);                                        \
+                                                                    \
+    fputs(string, file);                                            \
+                                                                    \
+    if (ALIGN_ASM_COMMENTS) ASM_LENGTH += strlen(string);           \
+    else                    ASM_LENGTH  = ASM_COMMENTS_START - 2;   \
+    FREE_PTR(string, char);                                         \
 }
 
 #define ADD_ASM_CODE(format...) {           \
