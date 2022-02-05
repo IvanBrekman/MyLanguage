@@ -486,7 +486,7 @@ int Tree_dump_graph(Tree* tree, const char* reason, FILE* log, int show_parent_e
         if (type == data_type::VAR_T)   color = "maroon";
         if (type == data_type::OPR_T)   color = "magenta2";
 
-        const char* shape = "record";
+        const char* shape = cur_node->data.saving_node == 0 ? "record" : "ellipse";
 
         if (type == data_type::OPR_T && (cur_node->data.value.name[0] == '<' || cur_node->data.value.name[0] == '>'))
                                              SPR_FPUTS(dot_file, "\t%d[ shape=%s label=\"\\%s\" width=2 fontsize=25 style=\"filled\" color=\"%s\" ]\n", INT_ADDRESS(cur_node), shape, cur_node->data.value.name,   color);

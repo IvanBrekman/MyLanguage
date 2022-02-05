@@ -41,23 +41,10 @@ struct NameTable {
     int locals_amount = -1;
 };
 
-struct StandardFunction {
-    const char* name = NULL;
-    int         code = -1;
-    int (*execute_func) (FILE* asm_file);
-
-    int  min_args = 0;
-    int  max_args = INT_MAX;
-    int real_args = 0;
-};
-
 struct StdContext {
-    StandardFunction* all_functions = NULL;
     int*             used_functions = NULL;
     int func_amount                 = -1;
-    int func_ptr                    = -1;
 };
-
 
 struct FrontContext {
     Tree*       AST_tree  = NULL;
@@ -97,6 +84,28 @@ struct CompileContext {
     int require_state  = NON_REQUIRED;
     int in_function    =  0;
     int require_return =  0;
+};
+
+struct ASMGenerateContext {
+    FILE*       asm_file      = NULL;
+
+    NameTable*  nametable     = NULL;
+    Namespace*  cur_namespace = NULL;
+
+    StdContext* std_ctx       = NULL;
+
+    int         asm_indent    = -1;
+    int         asm_length    = -1;
+};
+
+struct StandardFunction {
+    const char* name = NULL;
+    int         code = -1;
+    int (*execute_func) (ASMGenerateContext* asm_file);
+
+    int  min_args = 0;
+    int  max_args = INT_MAX;
+    int real_args = 0;
 };
 
 FrontContext* build_ast_tree(Tokens* tokens, const char* path);
@@ -152,12 +161,13 @@ int is_std_name(CompileContext* context);
                                                                                         \
         Node* tmp = func_ctx->node;                                                     \
         SET_NODE_NAME(data_type::OPR_T, LEXEM_NAME);                                    \
+        NODE_SAVING_STATE = 1;                                                          \
         TOKENS_PTR++;                                                                   \
                                                                                         \
         SyntaxContext* number = CALL_RULE(called_ryle);                                 \
         if (!RULE_DONE(number)) THROW_ERROR("Expexted expression part after operator"); \
                                                                                         \
-        add_child(func_ctx->node, tmp, child_type::LEFT);                               \
+        add_child(func_ctx->node, tmp,          child_type::LEFT );                     \
         add_child(func_ctx->node, number->node, child_type::RIGHT);                     \
     }                                                                                   \
 }

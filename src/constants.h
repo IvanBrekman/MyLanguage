@@ -8,12 +8,14 @@
 // Backend/AssemblerGenerator/asm_gen.h------------------------------------------
 const int CONST_MEMORY_START     = 10;
 const int LOCALS_PER_STACK_FRAME = 20;
+const int ASM_COMMENTS_START     = 48;
 
 static const char* ASM_CODE_FILE = "logs/processor_work/asm_code.txt";
 // ----------------------------------------------------------------------------
 
 // Backend/Processor-----------------------------------------------------------
-const int PRINTED_RAM_BLOCKS     = 3;
+const int  PRINTED_RAM_BLOCKS    = 3;
+const char ASM_COMMENT_SYMBOL    = ';';
 
 static const char* HOME_DIR = "src/Backend/Processor";
 // ----------------------------------------------------------------------------
@@ -51,8 +53,8 @@ static const char* OPERATORS[] = {
     "==", "!=", "<=", ">=",
     ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$",
 };
-static const char      LINE_COMMENT_SYMBOL = '#';
-static const char MULTILINE_COMMENT_SYMBOL = '@';
+const char      LINE_COMMENT_SYMBOL = '#';
+const char MULTILINE_COMMENT_SYMBOL = '@';
 const int OPERATORS_AMOUNT = sizeof(OPERATORS) / sizeof(OPERATORS[0]);
 // ----------------------------------------------------------------------------
 

@@ -25,7 +25,7 @@ FrontContext* build_ast_tree(Tokens* tokens, const char* path) {
             .locals         = NEW_PTR(Namespace, MAX_LOCAL_NAMESPACES_AMOUNT),
             .locals_amount  = 0,
         },
-        .std_ctx        = { NEW_PTR(StandardFunction, MAX_NAMES_AMOUNT), NEW_PTR(int, STD_FUNC_AMOUNT), 0, 0 },
+        .std_ctx        = { NEW_PTR(int, STD_FUNC_AMOUNT), 0 },
         .src_filepath   = path,
         .expected_sym   = NULL,
         .require_state  = NON_REQUIRED,
@@ -137,10 +137,6 @@ int print_std_context(StdContext* std_ctx) {
     ASSERT_IF(VALID_PTR(std_ctx), "Invalid std_ctx ptr", 0);
 
     printf("Standard context info----------\n");
-    printf("All detected standard functions\n");
-    for (int i = 0; i < std_ctx->func_amount; i++) {
-        printf("    %s - args amount: %d\n", std_ctx->all_functions[i].name, std_ctx->all_functions[i].real_args);
-    }
 
     printf("\nUsed functions:\n");
     for (int i = 0; i < STD_FUNC_AMOUNT; i++) {
@@ -195,18 +191,17 @@ GRAMMAR_RULE(GR) {
 GRAMMAR_RULE(Statement) {
     INIT;
 
-    if (EQUAL_LEXEM(data_type::OPR_T, END_STATEMENT)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"));
+    if (EQUAL_LEXEM(data_type::OPR_T, END_STATEMENT)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"), 0);
 
     if (EQUAL_LEXEM(data_type::OPR_T, START_BLOCK)) {
         TOKENS_PTR++;
         if (EQUAL_LEXEM(data_type::OPR_T, END_BLOCK)) {
             if (REQUIRE_RETURN) THROW_ERROR("Expected return in function");
-            RETURN_WITH_REBIND(END_BLOCK, data_type::OPR_T, strdup(";"));
+            RETURN_WITH_REBIND(END_BLOCK, data_type::OPR_T, strdup(";"), 0);
         }
 
         REQUIRE_RETURN = 0;
 
-        printf(RED "req ret: %d\n" NATURAL, REQUIRE_RETURN);
         func_ctx = CALL_RULE(Statement);
         if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Statement after START_BLOCK symbol");
 
@@ -223,7 +218,7 @@ GRAMMAR_RULE(Statement) {
     if (IN_FUNCTION) {
         func_ctx = CALL_RULE(Return);
         if (RULE_DONE(func_ctx)) {
-            REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
+            REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
             RETURN_COMPLETED;
         }
         if (REQUIRE_RETURN) THROW_ERROR("Expected return in function");
@@ -231,27 +226,27 @@ GRAMMAR_RULE(Statement) {
     
     func_ctx = CALL_RULE(If);
     if (RULE_DONE(func_ctx)) {
-        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(While);
     if (RULE_DONE(func_ctx)) {
-        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(Fdef);
     if (RULE_DONE(func_ctx)) {
-        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"));
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(Vdef);
-    if (RULE_DONE(func_ctx)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"));
+    if (RULE_DONE(func_ctx)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"), 0);
 
     func_ctx = CALL_RULE(Exp);
-    if (RULE_DONE(func_ctx)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"));
+    if (RULE_DONE(func_ctx)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"), 0);
 
     RETURN_NOT_COMPLETED;
 }
@@ -275,7 +270,7 @@ GRAMMAR_RULE(Fdef) {
 
     NAMESPACE = &LOCAL_NAMESPACES[NAME_TABLE.locals_amount - 1];
     ADD_NAME(name_type::FUNCTION, MAIN_NAME);
-    REBIND_CTX_LEFT(data_type::VAR_T, strdup("func"));
+    REBIND_CTX_LEFT(data_type::VAR_T, strdup("func"), 0);
 
     HARD_REQUIRE(OPEN_BRACKET);
 
@@ -318,7 +313,7 @@ GRAMMAR_RULE(Return) {
     func_ctx = CALL_RULE(Exp);
     if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Expression after return");
 
-    RETURN_WITH_REBIND(END_STATEMENT, data_type::VAR_T, strdup("return"));
+    RETURN_WITH_REBIND(END_STATEMENT, data_type::VAR_T, strdup("return"), 1);
 }
 
 GRAMMAR_RULE(Call) {
@@ -332,7 +327,7 @@ GRAMMAR_RULE(Call) {
     }
 
     HARD_REQUIRE(OPEN_BRACKET);
-    REBIND_CTX_LEFT(data_type::VAR_T, strdup("call"));
+    REBIND_CTX_LEFT(data_type::VAR_T, strdup("call"), 1);
 
     int args_amount = defined_name(MAIN_NAME, context)->args_amount;
 
@@ -340,7 +335,7 @@ GRAMMAR_RULE(Call) {
     Node* cur_node = func_ctx->node;
     SyntaxContext* args = NULL;
     while (args = CALL_RULE(Exp)) {
-        REBIND_NODE(data_type::OPR_T, strdup(";"), args, LEFT);
+        REBIND_NODE(data_type::OPR_T, strdup(";"), 0, args, LEFT);
         add_child(cur_node, args->node, child_type::RIGHT);
         cur_node = args->node;
         real_args_am++;
@@ -366,7 +361,7 @@ GRAMMAR_RULE(StdFunc) {
     TOKENS_PTR++;
 
     HARD_REQUIRE(OPEN_BRACKET);
-    REBIND_CTX_LEFT(data_type::VAR_T, strdup("call"));
+    REBIND_CTX_LEFT(data_type::VAR_T, strdup("call"), 1);
 
     int       real_args_am = 0;
     Node*         cur_node = func_ctx->node;
@@ -376,7 +371,7 @@ GRAMMAR_RULE(StdFunc) {
     memcpy(func, &ALL_STANDARD_FUNCTIONS[std_name_index], sizeof(StandardFunction));
 
     while (args = CALL_RULE(Exp)) {
-        REBIND_NODE(data_type::OPR_T, strdup(";"), args, LEFT);
+        REBIND_NODE(data_type::OPR_T, strdup(";"), 0, args, LEFT);
         if (real_args_am == 0) {
             add_child(cur_node, args->node, child_type::RIGHT);
         } else {
@@ -468,8 +463,8 @@ GRAMMAR_RULE(If_cond) {
     SyntaxContext* st = CALL_RULE(Statement);
     if (!RULE_DONE(st)) THROW_ERROR("Expected statement");
 
-    REBIND_CTX_LEFT(data_type::OPR_T, strdup("if"));
-    REBIND_NODE(data_type::OPR_T, strdup("if_else"), st, child_type::LEFT);
+    REBIND_CTX_LEFT(data_type::OPR_T, strdup("if"), 1);
+    REBIND_NODE(data_type::OPR_T, strdup("if_else"), 0, st, child_type::LEFT);
     add_child(func_ctx->node, st->node, child_type::RIGHT);
     //
 
@@ -489,7 +484,7 @@ GRAMMAR_RULE(Vdef) {
         CHECK_REDEFINITION(MAIN_NAME);
         ADD_NAME(name_type::VARIABLE, MAIN_NAME);
 
-        REBIND_CTX_LEFT(data_type::VAR_T, strdup("def"));
+        REBIND_CTX_LEFT(data_type::VAR_T, strdup("def"), 0);
         RETURN_COMPLETED;
     }
 
@@ -520,6 +515,7 @@ GRAMMAR_RULE(Ass) {
     SET_NODE_NAME(data_type::OPR_T, strdup("="));
     SET_MAIN_NAME(variable->main_name);
 
+    NODE_SAVING_STATE = 1;
     add_child(func_ctx->node, variable->node,   child_type::LEFT);
     add_child(func_ctx->node, expression->node, child_type::RIGHT);
 
@@ -580,25 +576,25 @@ GRAMMAR_RULE(P) {
         func_ctx = CALL_RULE(Exp);
         if (!RULE_DONE(func_ctx)) THROW_ERROR("Expexted expression after OPEN_BRACKET");
 
-        if (unary_oper) RETURN_WITH_REBIND(CLOSE_BRACKET, data_type::OPR_T, unary_oper);
+        if (unary_oper) RETURN_WITH_REBIND(CLOSE_BRACKET, data_type::OPR_T, unary_oper, 1);
         RETURN_WITH_REQUIRE(CLOSE_BRACKET);
     }
 
     func_ctx = CALL_RULE(Number);
     if (RULE_DONE(func_ctx)) {
-        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper, 1);
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(Call);
     if (RULE_DONE(func_ctx)) {
-        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper, 1);
         RETURN_COMPLETED;
     }
 
     func_ctx = CALL_RULE(StdFunc);
     if (RULE_DONE(func_ctx)) {
-        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper, 1);
         RETURN_COMPLETED;
     }
 
@@ -610,7 +606,7 @@ GRAMMAR_RULE(P) {
             THROW_ERROR("Not a Variable");
         }
 
-        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper);
+        if (unary_oper) REBIND_CTX_LEFT(data_type::OPR_T, unary_oper, 1);
         RETURN_COMPLETED;
     }
 

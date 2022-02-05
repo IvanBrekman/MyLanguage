@@ -7,10 +7,10 @@
 
 #include "../Backend/AssemblerGenerator/asm_gen.h"
 
-int print(FILE* asm_file);
-int enter(FILE* asm_file);
-int sqrt (FILE* asm_file);
-int prec (FILE* asm_file);
+int print(ASMGenerateContext* context);
+int enter(ASMGenerateContext* context);
+int sqrt (ASMGenerateContext* context);
+int prec (ASMGenerateContext* context);
 
 const StandardFunction ALL_STANDARD_FUNCTIONS[] = {
     { "print",     1, print, 1 },

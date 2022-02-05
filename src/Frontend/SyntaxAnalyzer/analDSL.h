@@ -42,29 +42,29 @@
 #define ADD_NAME(_type, name)     NAMESPACE->names[NAMESPACE->size++] = { name, _type }
 
 #define ADD_STD_FUNC(func, index) {                         \
-    STD_CTX.all_functions[STD_CTX.func_amount++] = *func;   \
     STD_CTX.used_functions[index] = 1;                      \
 }
 
 #define MAIN_NAME             func_ctx->main_name
 #define SET_MAIN_NAME(_value) MAIN_NAME = _value;
 
-#define SET_NODE(_type, _value, ctx, _union_type) { \
-    ctx->node = NEW_PTR(Node, 1);                   \
-    node_ctor(ctx->node, NULL, { _type, 0 });       \
-    ctx->node->data.value._union_type  = _value;    \
+#define SET_NODE(_type, _value, saving_state, ctx, _union_type) {   \
+    ctx->node = NEW_PTR(Node, 1);                                   \
+    node_ctor(ctx->node, NULL, { _type, 0, saving_state });         \
+    ctx->node->data.value._union_type  = _value;                    \
 }
 
-#define SET_NODE_NAME(_type, _value)    SET_NODE(_type, _value, func_ctx, name);
-#define SET_NODE_NUMBER(_type, _value ) SET_NODE(_type, _value, func_ctx, number);
+#define SET_NODE_NAME(_type, _value)    SET_NODE(_type, _value, 0, func_ctx, name);
+#define SET_NODE_NUMBER(_type, _value)  SET_NODE(_type, _value, 0, func_ctx, number);
+#define NODE_SAVING_STATE               func_ctx->node->data.saving_node
 
-#define REBIND_NODE(_type, _value, ctx, _child_type) {  \
-    Node* tmp = ctx->node;                              \
-    SET_NODE(_type, _value, ctx, name);                 \
-    add_child(ctx->node, tmp, _child_type);             \
+#define REBIND_NODE(_type, _value, saving_state, ctx, _child_type) {    \
+    Node* tmp = ctx->node;                                              \
+    SET_NODE(_type, _value, saving_state, ctx, name);                   \
+    add_child(ctx->node, tmp, _child_type);                             \
 }
 
-#define REBIND_CTX_LEFT(_type, _value) REBIND_NODE(_type, _value, func_ctx, child_type::LEFT)
+#define REBIND_CTX_LEFT(_type, _value, saving_state) REBIND_NODE(_type, _value, saving_state, func_ctx, child_type::LEFT)
 #define CTX_TOKEN_SHIFT                func_ctx->token_shift
 
 #define INIT                                                    \
@@ -89,10 +89,10 @@
 
 #define RETURN_WITH_REQUIRE(symbol) { HARD_REQUIRE(symbol); RETURN_COMPLETED; }
 
-#define RETURN_WITH_REBIND(symbol, _type, _value) {     \
-    HARD_REQUIRE(symbol);                               \
-    REBIND_CTX_LEFT(_type, _value);                     \
-    RETURN_COMPLETED;                                   \
+#define RETURN_WITH_REBIND(symbol, _type, _value, saving_state) {       \
+    HARD_REQUIRE(symbol);                                               \
+    REBIND_CTX_LEFT(_type, _value, saving_state);                       \
+    RETURN_COMPLETED;                                                   \
 }
 
 #define HARD_REQUIRE(symbol) (context->require_state =     REQUIRED, Require(symbol, context))

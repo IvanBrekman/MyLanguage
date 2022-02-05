@@ -68,6 +68,7 @@ union data_value {
 struct node_value {
     data_type  type  = data_type::ERROR_T;
     data_value value = { };
+    int saving_node  = -1;
 };
 
 typedef node_value node_t;

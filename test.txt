@@ -1,5 +1,16 @@
-func f(a, b, c) {
-    return a = b + c;
+def n = enter();
+
+func sum(n) {
+    def sum_val = 0;
+
+    while (n > 0) {
+        sum_val = sum_val + enter();
+        n = n - 1;
+
+        if (n == 0) while (n + 1 > 0) { print(666); n = n - 2; };
+    }
+
+    return sum_val;
 }
 
-print(f(1, 2, 3 + 3));
+print(sum(n));

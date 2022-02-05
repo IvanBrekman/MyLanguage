@@ -10,6 +10,7 @@
 #include "config.h"
 #include "libs/baselib.h"
 #include "libs/file_funcs.h"
+#include "src/constants.h"
 
 #include "../arch/helper.h"
 #include "../arch/commands.h"
@@ -109,12 +110,12 @@ Text* get_tcom(Text* data) {
     for (int i = 0; i < data->lines; i++) {
         char* str_command = data->text[i].ptr;
 
-        if (str_command[0] == COMMENT_SYMBOL) {                             // If string starts with comment symbol skip this string
+        if (str_command[0] == ASM_COMMENT_SYMBOL) {                             // If string starts with comment symbol skip this string
             comment_str++;
             continue;
         }
         
-        char* com_sym_index = strchr(str_command, COMMENT_SYMBOL);
+        char* com_sym_index = strchr(str_command, ASM_COMMENT_SYMBOL);
         if (com_sym_index != NULL) {                                        // If find comment symbol in string (not at start), skip checking least string
             data->text[i].len = (int)(com_sym_index - &str_command[0]);
 

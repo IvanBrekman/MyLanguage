@@ -1,0 +1,9 @@
+def n = enter();
+
+def sum = 0;
+while (n) {
+    sum = sum + enter();
+    n = n - 1;
+}
+
+print(sum);
