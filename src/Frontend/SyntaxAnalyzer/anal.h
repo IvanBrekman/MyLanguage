@@ -122,25 +122,27 @@ int is_std_name(CompileContext* context);
 // RULES-----------------------------------------------------------------------
 /*
     Gr          ::= {Statement}+ '$'
-    Statement   ::= '{'Statement +? Return'}' | ?Return | If | While | Fdef | {Vdef | Exp}';'
+    Statement   ::= '{' Statement +? Return '}' | ?Return | If | While | For | Fdef | {Vdef | Exp} ';'
 
-    Fdef        ::= 'func' Id '('{Id ','}*')' (Statement + Return)
-    Return      ::= 'return' Exp';'
-    Call        ::= Id'('{Exp','}*')'
-    StdFunc     ::= Id'('{Exp','}*')'
+    Fdef        ::= 'func' Id '(' {Id ',' }* ')' (Statement + Return)
+    Return      ::= 'return' Exp ';'
+    Call        ::= Id '(' {Exp ',' }* ')'
+    StdFunc     ::= Id '(' {Exp ',' }* ')'
+
+    For         ::= 'for' '(' {Vdef | Ass} '->' Exp { ':' Exp}? ')' Statement
 
     While       ::= 'while' If_cond
-    If          ::= 'if' If_cond {'elif' If_cond}* {'else' Statement}?
-    If_cond     ::= '('Exp')' Statement
+    If          ::= 'if' If_cond { 'elif' If_cond}* { 'else' Statement}?
+    If_cond     ::= '(' Exp ')' Statement
 
-    Vdef        ::= 'def' {Ass | Id}
-    Ass         ::= Id'='Exp
+    Vdef        ::= 'def' Ass
+    Ass         ::= Id '=' Exp
     Exp         ::= Ass | Cmp
     Cmp         ::= Lvalue{[< > <= >= == !=]Lvalue}*
 
     Lvalue      ::= T{[+-]T}*
     T           ::= P{[/*%]P}*
-    P           ::= {-}? '('Exp')' | Number | Call | StdFunc | Id
+    P           ::= {-+!}? '(' Exp ')' | Number | Call | StdFunc | Id
 
     Number      ::= [0-9]
     Id          ::= [a-zA-Z_]{[a-zA-Z_0-9]}*
@@ -160,7 +162,7 @@ int is_std_name(CompileContext* context);
         if (!can_continue) break;                                                       \
                                                                                         \
         Node* tmp = func_ctx->node;                                                     \
-        SET_NODE_NAME(data_type::OPR_T, LEXEM_NAME);                                    \
+        SET_NODE_NAME(data_type::OPR_T, LEXEM_NAME, func_ctx);                          \
         NODE_SAVING_STATE = 1;                                                          \
         TOKENS_PTR++;                                                                   \
                                                                                         \
@@ -179,6 +181,8 @@ GRAMMAR_RULE(Fdef);
 GRAMMAR_RULE(Return);
 GRAMMAR_RULE(Call);
 GRAMMAR_RULE(StdFunc);
+
+GRAMMAR_RULE(For);
 
 GRAMMAR_RULE(While);
 GRAMMAR_RULE(If);

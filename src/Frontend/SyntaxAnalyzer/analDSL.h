@@ -48,15 +48,21 @@
 #define MAIN_NAME             func_ctx->main_name
 #define SET_MAIN_NAME(_value) MAIN_NAME = _value;
 
+#define NEW_NAME_NODE(_type, _value, saving_state, node) {      \
+    node = NEW_PTR(Node, 1);                                    \
+    node_ctor(node, NULL, { _type, 0, saving_state });          \
+    node->data.value.name  = _value;                            \
+}
+
 #define SET_NODE(_type, _value, saving_state, ctx, _union_type) {   \
     ctx->node = NEW_PTR(Node, 1);                                   \
     node_ctor(ctx->node, NULL, { _type, 0, saving_state });         \
     ctx->node->data.value._union_type  = _value;                    \
 }
 
-#define SET_NODE_NAME(_type, _value)    SET_NODE(_type, _value, 0, func_ctx, name);
-#define SET_NODE_NUMBER(_type, _value)  SET_NODE(_type, _value, 0, func_ctx, number);
-#define NODE_SAVING_STATE               func_ctx->node->data.saving_node
+#define SET_NODE_NAME(_type, _value, ctx)   SET_NODE(_type, _value, 0, ctx, name)
+#define SET_NODE_NUMBER(_type, _value, ctx) SET_NODE(_type, _value, 0, ctx, number)
+#define NODE_SAVING_STATE                   func_ctx->node->data.saving_node
 
 #define REBIND_NODE(_type, _value, saving_state, ctx, _child_type) {    \
     Node* tmp = ctx->node;                                              \

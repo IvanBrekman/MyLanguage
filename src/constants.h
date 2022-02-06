@@ -50,12 +50,16 @@ const int NON_REQUIRED = 0;
 
 // Frontend/Tokenizer/token.h--------------------------------------------------
 static const char* OPERATORS[] = {
-    "==", "!=", "<=", ">=",
-    ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$", "%",
+    "==", "!=", "<=", ">=", "->",
+    ";",  "(",  ")",  "+",  "-",  "*",  "/",  "=", "<", ">", "$", "%", ":", "!"
+};
+static const char* UNARY_OPERATORS[] = {
+    "-", "+", "!"
 };
 const char      LINE_COMMENT_SYMBOL = '#';
 const char MULTILINE_COMMENT_SYMBOL = '@';
-const int OPERATORS_AMOUNT = sizeof(OPERATORS) / sizeof(OPERATORS[0]);
+const int       OPERATORS_AMOUNT = sizeof(OPERATORS) / sizeof(OPERATORS[0]);
+const int UNARY_OPERATORS_AMOUNT = sizeof(OPERATORS) / sizeof(OPERATORS[0]);
 // ----------------------------------------------------------------------------
 
 /* END BLOCK *///++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -193,8 +193,7 @@ GRAMMAR_RULE(Statement) {
 
     if (EQUAL_LEXEM(data_type::OPR_T, END_STATEMENT)) RETURN_WITH_REBIND(END_STATEMENT, data_type::OPR_T, strdup(";"), 0);
 
-    if (EQUAL_LEXEM(data_type::OPR_T, START_BLOCK)) {
-        TOKENS_PTR++;
+    if (SOFT_REQUIRE(START_BLOCK)) {
         if (EQUAL_LEXEM(data_type::OPR_T, END_BLOCK)) {
             if (REQUIRE_RETURN) THROW_ERROR("Expected return in function");
             RETURN_WITH_REBIND(END_BLOCK, data_type::OPR_T, strdup(";"), 0);
@@ -236,6 +235,12 @@ GRAMMAR_RULE(Statement) {
         RETURN_COMPLETED;
     }
 
+    func_ctx = CALL_RULE(For);
+    if (RULE_DONE(func_ctx)) {
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
+        RETURN_COMPLETED;
+    }
+
     func_ctx = CALL_RULE(Fdef);
     if (RULE_DONE(func_ctx)) {
         REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
@@ -254,8 +259,7 @@ GRAMMAR_RULE(Statement) {
 GRAMMAR_RULE(Fdef) {
     INIT;
 
-    if (!EQUAL_LEXEM(data_type::VAR_T, "func")) RETURN_NOT_COMPLETED;
-    TOKENS_PTR++;
+    if (!SOFT_REQUIRE("func")) RETURN_NOT_COMPLETED;
 
     if (IN_FUNCTION) THROW_ERROR("Function definition in another function");
 
@@ -285,8 +289,7 @@ GRAMMAR_RULE(Fdef) {
         cur_node = args->node;
         args_amount++;
 
-        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
-        TOKENS_PTR++;
+        if (!SOFT_REQUIRE(",")) break;
     }
     HARD_REQUIRE(CLOSE_BRACKET);
 
@@ -307,8 +310,7 @@ GRAMMAR_RULE(Fdef) {
 GRAMMAR_RULE(Return) {
     INIT;
 
-    if (!EQUAL_LEXEM(data_type::VAR_T, "return")) RETURN_NOT_COMPLETED;
-    TOKENS_PTR++;
+    if (!SOFT_REQUIRE("return")) RETURN_NOT_COMPLETED;
 
     func_ctx = CALL_RULE(Exp);
     if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Expression after return");
@@ -341,8 +343,7 @@ GRAMMAR_RULE(Call) {
         real_args_am++;
 
         if (real_args_am > args_amount) THROW_ERROR("Too many agruments for function");
-        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
-        TOKENS_PTR++;
+        if (!SOFT_REQUIRE(",")) break;
     }
 
    if (real_args_am < args_amount) THROW_ERROR("Not enough arguments for function");
@@ -357,7 +358,7 @@ GRAMMAR_RULE(StdFunc) {
     int std_name_index = is_std_name(context);
     if (std_name_index == -1) RETURN_NOT_COMPLETED;
 
-    SET_NODE_NAME(data_type::VAR_T, LEXEM_NAME);
+    SET_NODE_NAME(data_type::VAR_T, LEXEM_NAME, func_ctx);
     TOKENS_PTR++;
 
     HARD_REQUIRE(OPEN_BRACKET);
@@ -381,8 +382,7 @@ GRAMMAR_RULE(StdFunc) {
         real_args_am++;
 
         if (real_args_am > func->max_args) THROW_ERROR("Too many agruments for standard function");
-        if (!EQUAL_LEXEM(data_type::OPR_T, ",")) break;
-        TOKENS_PTR++;
+        if (!SOFT_REQUIRE(",")) break;
     }
     if (real_args_am < func->min_args) THROW_ERROR("Not enough arguments for standard function");
 
@@ -393,14 +393,80 @@ GRAMMAR_RULE(StdFunc) {
     RETURN_COMPLETED;
 }
 
+GRAMMAR_RULE(For) {
+    INIT;
+
+    if (SOFT_REQUIRE("for") && SOFT_REQUIRE(OPEN_BRACKET)) {
+        SyntaxContext* func_ctx = CALL_RULE(Vdef);
+        if (!RULE_DONE(func_ctx)) {
+            func_ctx = CALL_RULE(Ass);
+            if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected counter definition or assignment in cycle");
+            CHECK_UNDEFINITION(MAIN_NAME)
+        }
+        char* counter_name = MAIN_NAME;
+
+        HARD_REQUIRE("->");
+        SyntaxContext* end_ctx = CALL_RULE(Exp);
+        if (!RULE_DONE(end_ctx)) THROW_ERROR("Expected expression for end value of counter in cycle");
+
+        Node* step_node = NEW_PTR(Node, 1);
+        node_ctor(step_node, NULL, { data_type::CONST_T, 1, 0 });
+        if (SOFT_REQUIRE(":")) {
+            SyntaxContext* step_exp = CALL_RULE(Exp);
+            if (!RULE_DONE(step_exp)) THROW_ERROR("Expected expression for step value");
+            step_node = step_exp->node;
+        }
+
+        HARD_REQUIRE(CLOSE_BRACKET);
+        SyntaxContext* st = CALL_RULE(Statement);
+        if (!RULE_DONE(st)) THROW_ERROR("Expected statement in for body");
+
+        /* Creating while tree */
+        // Creating continue condition tree
+        Node* counter_node = NULL;
+        NEW_NAME_NODE(data_type::VAR_T, strdup(counter_name), 0, counter_node);
+
+        REBIND_NODE(data_type::OPR_T, strdup("<"), 1, end_ctx, child_type::RIGHT);
+        add_child(end_ctx->node, counter_node, child_type::LEFT);
+        //
+
+        // Creating statement tree  Неведомая хрень. Лучше даже не пытаться понять что тут происходит
+        SyntaxContext* tmp_ctx = NEW_PTR(SyntaxContext, 1);
+        SET_NODE_NAME(data_type::VAR_T, strdup(counter_name), tmp_ctx);
+
+        REBIND_NODE(data_type::OPR_T, strdup("+"), 1, tmp_ctx, child_type::LEFT);
+        add_child(tmp_ctx->node, step_node, child_type::RIGHT);
+        REBIND_NODE(data_type::OPR_T, strdup("="), 1, tmp_ctx, child_type::RIGHT);
+
+        Node* counter_node1 = NULL;
+        NEW_NAME_NODE(data_type::VAR_T, strdup(counter_name), 0, counter_node1);
+        add_child(tmp_ctx->node, counter_node1, child_type::LEFT);
+        REBIND_NODE(data_type::OPR_T, strdup(";"), 0, tmp_ctx, child_type::RIGHT);
+        add_child(st->node, tmp_ctx->node, child_type::RIGHT);
+        
+
+        REBIND_NODE(data_type::OPR_T, strdup("if_else"), 0, st, child_type::LEFT);
+        REBIND_NODE(data_type::OPR_T, strdup("while"),   1, st, child_type::RIGHT);
+        add_child(st->node, end_ctx->node, child_type::LEFT);
+        REBIND_NODE(data_type::OPR_T, strdup(";"),       0, st, child_type::LEFT);
+        //
+
+        REBIND_CTX_LEFT(data_type::OPR_T, strdup(";"), 0);
+        add_child(func_ctx->node, st->node, child_type::RIGHT);
+        /* */
+
+        RETURN_COMPLETED;
+    }
+
+    RETURN_NOT_COMPLETED;
+}
+
 GRAMMAR_RULE(While) {
     INIT;
 
-    if (EQUAL_LEXEM(data_type::VAR_T, "while")) {
-        TOKENS_PTR++;
-
+    if (SOFT_REQUIRE("while")) {
         func_ctx = CALL_RULE(If_cond);
-        if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Statement after while ()");
+        if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected Statement after while body");
 
         func_ctx->node->data.value.name = strdup("while");
         RETURN_COMPLETED;
@@ -412,8 +478,7 @@ GRAMMAR_RULE(While) {
 GRAMMAR_RULE(If) {
     INIT;
 
-    if (!EQUAL_LEXEM(data_type::VAR_T, "if")) RETURN_NOT_COMPLETED;
-    TOKENS_PTR++;
+    if (!SOFT_REQUIRE("if")) RETURN_NOT_COMPLETED;
     
     func_ctx = CALL_RULE(If_cond);
     if (!RULE_DONE(func_ctx)) RETURN_NOT_COMPLETED;
@@ -422,8 +487,7 @@ GRAMMAR_RULE(If) {
     ASSERT_IF(VALID_PTR(cur_node), "Invalid cur_node ptr", NULL);
 
     while (1) {
-        if (!EQUAL_LEXEM(data_type::VAR_T, "elif")) break;
-        TOKENS_PTR++;
+        if (!SOFT_REQUIRE("elif")) break;
 
         SyntaxContext* if_base = CALL_RULE(If_cond);
         if (!RULE_DONE(if_base)) break;
@@ -433,9 +497,7 @@ GRAMMAR_RULE(If) {
         ASSERT_IF(VALID_PTR(cur_node), "Invalid cur_node ptr in cycle", NULL);
     }
 
-    if (EQUAL_LEXEM(data_type::VAR_T, "else")) {
-        TOKENS_PTR++;
-
+    if (SOFT_REQUIRE("else")) {
         SyntaxContext* st = CALL_RULE(Statement);
         if (!RULE_DONE(st)) THROW_ERROR("Expected Statement after else");
 
@@ -449,14 +511,12 @@ GRAMMAR_RULE(If_cond) {
     INIT;
 
     // Try get '(exp)'
-    if (!EQUAL_LEXEM(data_type::OPR_T, OPEN_BRACKET)) THROW_ERROR("Expected OPEN_BRACKET after if");
-    TOKENS_PTR++;
+    HARD_REQUIRE(OPEN_BRACKET);
 
     func_ctx = CALL_RULE(Exp);
-    if (!RULE_DONE(func_ctx)) THROW_ERROR("Expected expression");
+    if (!RULE_DONE(func_ctx))         THROW_ERROR("Expected expression");
 
-    if (!EQUAL_LEXEM(data_type::OPR_T, CLOSE_BRACKET)) THROW_ERROR("Expected CLOSE_BRACKET after expression");
-    TOKENS_PTR++;
+    HARD_REQUIRE(CLOSE_BRACKET);
     //
 
     // Try get 'Statement'
@@ -474,10 +534,7 @@ GRAMMAR_RULE(If_cond) {
 GRAMMAR_RULE(Vdef) {
     INIT;
 
-    if (!EQUAL_LEXEM(data_type::VAR_T, "def")) {
-        RETURN_NOT_COMPLETED;
-    }
-    TOKENS_PTR++;
+    if (!SOFT_REQUIRE("def")) RETURN_NOT_COMPLETED;
 
     func_ctx = CALL_RULE(Ass);
     if (RULE_DONE(func_ctx)) {
@@ -512,7 +569,7 @@ GRAMMAR_RULE(Ass) {
     SyntaxContext* expression = CALL_RULE(Exp);
     if (!RULE_DONE(expression)) THROW_ERROR("Expected Expression in Assignment");
 
-    SET_NODE_NAME(data_type::OPR_T, strdup("="));
+    SET_NODE_NAME(data_type::OPR_T, strdup("="), func_ctx);
     SET_MAIN_NAME(variable->main_name);
 
     NODE_SAVING_STATE = 1;
@@ -565,14 +622,12 @@ GRAMMAR_RULE(P) {
     INIT;
 
     char* unary_oper = NULL;
-    if (EQUAL_LEXEM(data_type::OPR_T, "-")) {
-        TOKENS_PTR++;
-        unary_oper = strdup("-");
+    if (SOFT_REQUIRE("-")) unary_oper = strdup("-");
+    for (int i = 0; i < UNARY_OPERATORS_AMOUNT; i++) {
+        if (SOFT_REQUIRE(UNARY_OPERATORS[i])) unary_oper = strdup(UNARY_OPERATORS[i]);
     }
 
-    if (EQUAL_LEXEM(data_type::OPR_T, OPEN_BRACKET)) {
-        TOKENS_PTR++;
-
+    if (SOFT_REQUIRE(OPEN_BRACKET)) {
         func_ctx = CALL_RULE(Exp);
         if (!RULE_DONE(func_ctx)) THROW_ERROR("Expexted expression after OPEN_BRACKET");
 
@@ -621,7 +676,7 @@ GRAMMAR_RULE(Number) {
         RETURN_NOT_COMPLETED;
     }
 
-    SET_NODE_NUMBER(data_type::CONST_T, LEXEM_NUM);
+    SET_NODE_NUMBER(data_type::CONST_T, LEXEM_NUM, func_ctx);
 
     TOKENS_PTR++;
     RETURN_COMPLETED;
@@ -634,7 +689,7 @@ GRAMMAR_RULE(Id) {
         RETURN_NOT_COMPLETED;
     }
 
-    SET_NODE_NAME(data_type::VAR_T, LEXEM_NAME);
+    SET_NODE_NAME(data_type::VAR_T, LEXEM_NAME, func_ctx);
     SET_MAIN_NAME(LEXEM_NAME);
 
     TOKENS_PTR++;
