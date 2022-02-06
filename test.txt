@@ -1,2 +1,4 @@
-def a = 3 + +1;
-print(a);
+def sum = -;
+for (def i = 0 -> enter() : 2) sum = sum + enter();
+
+print(sum);

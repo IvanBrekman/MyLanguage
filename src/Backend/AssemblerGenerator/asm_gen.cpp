@@ -147,20 +147,24 @@ int processing_operator(const Node* node, ASMGenerateContext* context) {
     if (ASM_LENGTH == 0) ADD_ASM_CODE(" ");
     FULL_LINE_COMMENT("Processing '%s' operator", NODE_NAME);
 
-    if      (EQUAL_OPER("+")) { ADD_ASM_CODE("add"); }
+    if      (EQUAL_OPER("+")) {
+        if (UNARY_OPER) {
+            FULL_LINE_COMMENT("Unary plus");
+        } else ADD_ASM_CODE("add");
+    }
     else if (EQUAL_OPER("-")) {
         if (UNARY_OPER) {
             FULL_LINE_COMMENT("Unary minus");
             ADD_ASM_CODE("push -1");
             ADD_ASM_CODE("mul");
             FULL_LINE_COMMENT("~~~~~~~~~~~");
-        } else {
-            ADD_ASM_CODE("sub");
-        }
+        } else ADD_ASM_CODE("sub");
     }
     else if (EQUAL_OPER("*")) { ADD_ASM_CODE("mul"); }
     else if (EQUAL_OPER("/")) { ADD_ASM_CODE("div"); }
     else if (EQUAL_OPER("%")) { ADD_ASM_CODE("mod"); }
+    else if (EQUAL_OPER("!")
+             && UNARY_OPER)   { ADD_ASM_CODE("not"); }
 
     else if (EQUAL_OPER(">"))  { PROCESS_COMPARISON("jg",  node_counter); }
     else if (EQUAL_OPER("<"))  { PROCESS_COMPARISON("jl",  node_counter); }

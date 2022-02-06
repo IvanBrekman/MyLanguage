@@ -138,8 +138,11 @@ COMMAND_DEFINITION( dmul, 0, 0, 0b0000000000000000, {
     return OK_;
 })
 
-COMMAND_DEFINITION( mod,  1, 1, 0b0000000000000100, {
-    PUSH(((int)(POP * NEG_PRECISION) % ARG(0, NUMBER_BIT)) * POS_PRECISION);
+COMMAND_DEFINITION( mod,  0, 0, 0b0000000000000000, {
+    int arg1 = POP;
+    int arg2 = POP;
+
+    PUSH(((int)(arg2 * NEG_PRECISION) % arg1) * POS_PRECISION);
     return OK_;
 })
 
@@ -166,6 +169,11 @@ COMMAND_DEFINITION( abs,  0, 0, 0b0000000000000000, {
     int arg1 = POP;
 
     PUSH(arg1 >= 0 ? arg1 : -arg1);
+    return OK_;
+})
+
+COMMAND_DEFINITION( not,  0, 0, 0b0000000000000000, {
+    PUSH(POP == 0);
     return OK_;
 })
 // ----------------------------------------------------------------------------

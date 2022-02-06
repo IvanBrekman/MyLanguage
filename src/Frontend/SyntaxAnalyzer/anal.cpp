@@ -622,9 +622,11 @@ GRAMMAR_RULE(P) {
     INIT;
 
     char* unary_oper = NULL;
-    if (SOFT_REQUIRE("-")) unary_oper = strdup("-");
     for (int i = 0; i < UNARY_OPERATORS_AMOUNT; i++) {
-        if (SOFT_REQUIRE(UNARY_OPERATORS[i])) unary_oper = strdup(UNARY_OPERATORS[i]);
+        if (SOFT_REQUIRE(UNARY_OPERATORS[i])) {
+            unary_oper = strdup(UNARY_OPERATORS[i]);
+            break;
+        }
     }
 
     if (SOFT_REQUIRE(OPEN_BRACKET)) {
