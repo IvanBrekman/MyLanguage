@@ -1,8 +1,8 @@
-def x = -3;
-def y = 4;
+def x = enter();
+def y = enter();
 
 def max = 0;
 if (x > y) max = x;
 else       max = y;
 
-$
+print(max);

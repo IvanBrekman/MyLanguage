@@ -20,12 +20,18 @@ enum name_type {
     FUNCTION = 2
 };
 
-struct Name {
-    char*     name  = NULL;
-    name_type type  = name_type::NONE;
+enum obj_type {
+    VAR = 1,
+    PTR = 2
+};
 
-    int args_amount = -1;
-    int address     = -1;
+struct Name {
+    char*     name    = NULL;
+    name_type type    = name_type::NONE;
+    obj_type val_type = obj_type::VAR;
+
+    int args_amount   = -1;
+    int address       = -1;
 };
 
 struct Namespace {

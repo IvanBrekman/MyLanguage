@@ -72,8 +72,10 @@ COMMAND_DEFINITION( pop,  0, 1, 0b1111110000110000, {
         if (HAS_RAM) {
             int arg = 0;
             int need_prec = HAS_NUMBER;
+
             if (HAS_REGISTER) arg += read_from_reg(REG, ARG(0, REGISTER_BIT));
             if (HAS_NUMBER)   arg += ARG(0, NUMBER_BIT) * pow(10, PRECISION_VAL * need_prec);
+            
             RAM((int)(arg * NEG_PRECISION)) = pop_value;
         } else {
             write_to_reg(REG, ARG(0, REGISTER_BIT), pop_value);
